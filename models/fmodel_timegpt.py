@@ -24,7 +24,7 @@ dataset_zonnedael = DatasetZonnedaelNF()
 # =========================================================================================
 
 # ============================ TimeGPT Configuration ======================================
-TIMEGPT_API_KEY = 'nixak-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+TIMEGPT_API_KEY = 'nixak-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'  # Replace with your actual TimeGPT API key
 timegpt_client = NixtlaClient(api_key=TIMEGPT_API_KEY)
 
 timegpt_model_name = "timegpt-1-long-horizon"  # Options: "timegpt-1" or "timegpt-1-long-horizon"

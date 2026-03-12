@@ -23,7 +23,7 @@ dataset_belgium = DatasetBelgiumNF()
 dataset_germany = DatasetGermanyNF()
 dataset_london = DatasetLondonNF()
 dataset_zonnedael = DatasetZonnedaelNF()
-n_epochs = 50
+n_epochs = 100
 # =========================================================================================
 
 # ============================ Mamba Model Wrapper ========================================
