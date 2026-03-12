@@ -7,21 +7,6 @@ import pandas as pd
 import seaborn as sns
 import logging
 from sklearn.preprocessing import MinMaxScaler
-#from sklearn.metrics import root_mean_squared_error, mean_absolute_error, r2_score
-
-# Calculate metrics
-# def calculate_metrics(preds, actuals):
-#     preds = np.asarray(preds)
-#     actuals = np.asarray(actuals)
-
-#     mae = mean_absolute_error(actuals, preds)
-#     rmse = root_mean_squared_error(actuals, preds)
-#     mape = (np.abs((actuals - preds) / np.clip(np.abs(actuals), 1e-5, None))).mean()
-#     r2 = r2_score(actuals, preds)
-#     # ss_res = np.sum((actuals - preds) ** 2)
-#     # ss_tot = np.sum((actuals - np.mean(actuals)) ** 2)
-#     # r2 = 1 - ss_res / ss_tot if ss_tot != 0 else 0.0
-#     return mae, rmse, mape, r2
 
 # Calculate MAE, RMSE, MAPE metrics
 def calculate_metrics(preds, actuals):
@@ -45,12 +30,6 @@ def calculate_metrics(preds, actuals):
 def save_model(model, model_file):
     with open(model_file, "wb") as f:
         pickle.dump(model, f)
-
-# def split_train_test(X, y, val_size, test_size):
-#     train_size = len(X) - val_size - test_size
-#     X_train, X_val, X_test = X.iloc[:train_size], X.iloc[train_size:train_size + val_size], X.iloc[train_size + val_size:]
-#     y_train, y_val, y_test = y.iloc[:train_size], y.iloc[train_size:train_size + val_size], y.iloc[train_size + val_size:]
-#     return X_train, X_val, X_test, y_train, y_val, y_test
 
 def split_train_test(X, y, test_size):
     train_size = len(X) - test_size
@@ -133,51 +112,4 @@ def plot_model_metrics(metrics, save_dir: str):
     plt.tight_layout()
     pdf_path = os.path.join(save_dir, "model_metrics_summary.pdf")
     plt.savefig(pdf_path)
-    # plt.show()
-
-# def train_val_loss(final_loss_df, model_name, save_dir):
-#     # Determine the column names for train and validation loss dynamically
-#     train_loss_col = model_name.split('_')[0] # Assumes model_name is like "Informer" or "NBEATS_model"
-#     val_loss_col = f"{train_loss_col}-val"
-
-#     # Plot and save the training vs validation loss
-#     plt.figure(figsize=(10, 6))
-#     plt.plot(final_loss_df[train_loss_col], label='Train Loss')
-#     plt.plot(final_loss_df[val_loss_col], label='Validation Loss')
-#     plt.title(f'Model Loss for {model_name}')
-#     plt.xlabel('Epoch')
-#     plt.ylabel('Loss')
-#     plt.legend()
-#     plt.grid(True)
-#     loss_plot_path = os.path.join(save_dir, f"{model_name}_loss_plot.pdf")
-#     plt.savefig(loss_plot_path)
-#     plt.close()
-#     logging.info(f"Saved loss plot to {loss_plot_path}")
-
-#     # Save the training vs validation loss data to a CSV file
-#     loss_csv_path = os.path.join(save_dir, f"{model_name}_loss_data.csv")
-#     final_loss_df.to_csv(loss_csv_path)
-#     logging.info(f"Saved loss data to {loss_csv_path}")
-
-# def plot_train_val_loss(train_losses, val_losses, model_name, save_dir):
-#     """Plot and save train vs validation loss"""
-#     plt.figure(figsize=(10, 6))
-#     plt.plot(train_losses, label='Training Loss', color='blue')
-#     plt.plot(val_losses, label='Validation Loss', color='red')
-#     plt.xlabel('Epoch')
-#     plt.ylabel('Loss')
-#     plt.title(f'{model_name} - Training vs Validation Loss')
-#     plt.legend()
-#     plt.grid(True)
-
-#     # Save as PDF
-#     plt.savefig(os.path.join(save_dir, f"{model_name}_train_val_loss.pdf"))
-#     plt.close()
-
-#     # Save as CSV
-#     loss_df = pd.DataFrame({
-#         'epoch': range(len(train_losses)),
-#         'train_loss': train_losses,
-#         'validation_loss': val_losses
-#     })
-#     loss_df.to_csv(os.path.join(save_dir, f"{model_name}_train_val_loss.csv"), index=False)
+ 

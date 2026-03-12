@@ -3,7 +3,12 @@ import os
 import warnings
 import logging
 from utils import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
-from dataset_config import DatasetBelgiumNeuralForecast, DatasetLondonZonnedaelNeuralForecast
+from dataset_config import (
+    DatasetBelgiumNF,
+    DatasetGermanyNF,
+    DatasetLondonNF,
+    DatasetZonnedaelNF,
+)
 import time
 import gc
 import torch
@@ -14,10 +19,12 @@ from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
 from uni2ts.model.moirai_moe import MoiraiMoEForecast, MoiraiMoEModule
 
 # ============================ Dataset Selection Toggle ===================================
-selected_dataset = "belgium"  # Options: "belgium" or "london_zonnedael"
+selected_dataset = "belgium"  # Options: "belgium" or "germany" or "london" or "zonnedael"
 
-dataset_belgium = DatasetBelgiumNeuralForecast()
-dataset_london_zonnedael = DatasetLondonZonnedaelNeuralForecast()
+dataset_belgium = DatasetBelgiumNF()
+dataset_germany = DatasetGermanyNF()
+dataset_london = DatasetLondonNF()
+dataset_zonnedael = DatasetZonnedaelNF()
 # =========================================================================================
 
 # Moirai Model Parameters
@@ -136,6 +143,9 @@ def train_battery_model(battery_data, save_dir, house, freq, forecast_horizon, s
 def train_london_model(load_data, save_dir, freq, forecast_horizon, sampling_rate):
     return moirai_forecast_model(load_data, "london_load", save_dir, freq, forecast_horizon, sampling_rate)
 
+def train_germany_model(load_data, save_dir, freq, forecast_horizon, sampling_rate):
+    return moirai_forecast_model(load_data, "germany_load", save_dir, freq, forecast_horizon, sampling_rate)
+
 def train_zonnedael_model(customer_id, data_df, save_dir, freq, forecast_horizon, sampling_rate):
     return moirai_forecast_model(data_df, f"zonnedael_customer_{customer_id}", save_dir, freq, forecast_horizon, sampling_rate)
 
@@ -148,11 +158,6 @@ def train_all_models(start_dt, end_dt, save_dir, freq, forecast_horizon, samplin
     logging.info("...Start Uni2TS/Moirai forecasting...")
 
     if selected_dataset == "belgium":
-        logging.info("Forecasting load consumption")
-        load_data = dataset_belgium.get_inputs_for_load(start_dt, end_dt)
-        load_mae, load_rmse, load_mape, load_r2 = train_load_model(load_data, save_dir, freq, forecast_horizon, sampling_rate)
-        metrics.append({"model": "load", "MAE": load_mae, "RMSE": load_rmse, "MAPE": load_mape, "R2": load_r2})
-
         logging.info("Forecasting PV")
         for house in [1, 2, 3, 4]:
             pv_data = dataset_belgium.get_inputs_for_pv(house, start_dt, end_dt)
@@ -165,15 +170,22 @@ def train_all_models(start_dt, end_dt, save_dir, freq, forecast_horizon, samplin
             battery_mae, battery_rmse, battery_mape, battery_r2 = train_battery_model(battery_data, save_dir, house, freq, forecast_horizon, sampling_rate)
             metrics.append({"model": f"bess_house_{house}", "MAE": battery_mae, "RMSE": battery_rmse, "MAPE": battery_mape, "R2": battery_r2})
 
-    elif selected_dataset == "london_zonnedael":
+    elif selected_dataset == "germany":
+        logging.info("Forecasting Germany load")
+        load_data = dataset_germany.get_inputs_for_load(start_dt, end_dt)
+        load_mae, load_rmse, load_mape, load_r2 = train_germany_model(load_data, save_dir, freq, forecast_horizon, sampling_rate)
+        metrics.append({"model": "germany_load", "MAE": load_mae, "RMSE": load_rmse, "MAPE": load_mape, "R2": load_r2})
+
+    elif selected_dataset == "london":
         logging.info("Forecasting London load")
-        load_data = dataset_london_zonnedael.get_inputs_for_london_consumption()
+        load_data = dataset_london.get_inputs_for_load()
         load_mae, load_rmse, load_mape, load_r2 = train_london_model(load_data, save_dir, freq, forecast_horizon, sampling_rate)
         metrics.append({"model": "london_load", "MAE": load_mae, "RMSE": load_rmse, "MAPE": load_mape, "R2": load_r2})
 
+    elif selected_dataset == "zonnedael":
         logging.info("Forecasting Zonnedael customers")
         for customer_id in [8, 9, 43]:
-            data_df = dataset_london_zonnedael.get_inputs_for_zonnedael_consumption(customer_id)
+            data_df = dataset_zonnedael.get_inputs_for_zonnedael_consumption(customer_id)
             cust_mae, cust_rmse, cust_mape, cust_r2 = train_zonnedael_model(customer_id, data_df, save_dir, freq, forecast_horizon, sampling_rate)
             metrics.append({"model": f"zonnedael_customer_{customer_id}", "MAE": cust_mae, "RMSE": cust_rmse, "MAPE": cust_mape, "R2": cust_r2})
 
