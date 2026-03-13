@@ -1,167 +1,134 @@
-# Forecast_Evaluation
+# Forecast_Models_Evaluation
 Official repository for the paper: A Survey and Benchmark for Household Electricity Forecasting: From Statistical to Foundation Models
 
-# Time Series Forecasting Models Overview
+This project benchmarks 30 time series forecasting models across six methodological classes, spanning classical statistical methods to large-scale foundation models. It includes unified training pipelines, dataset loaders, metric computation, and reproducible results logging.
 
-This repository benchmarks **30 time-series forecasting models** spanning **six major methodological classes**:
+**Highlights**
+- 30 models across 6 classes with consistent evaluation pipelines
+- Multiple household energy datasets (PV, battery, and load)
+- Reproducible runs with per-model logging, plots, and CSV outputs
 
-1. Statistical & Machine Learning  
-2. MLP-based Neural Networks  
-3. Recurrent Neural Networks  
-4. Convolutional Neural Networks  
-5. Transformer-based Models  
-6. Time Series Foundation Models  
+## Quick Start
 
-These models represent the evolution of forecasting techniques from **classical statistical approaches to large-scale pre-trained time-series foundation models**.
+### 1) Create environment and install dependencies
 
----
+This repository does not ship a requirements file yet. A minimal install that matches the code paths is:
 
-# Model Categories
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+python -m pip install --upgrade pip
+python -m pip install pandas numpy scipy scikit-learn lightgbm pmdarima matplotlib seaborn
+python -m pip install torch neuralforecast gluonts mxnet transformers
+python -m pip install nixtla timesfm chronos-forecasting mamba-ssm uni2ts
+```
 
-| Class | Number of Models |
-|------|------|
-| Statistical & Machine Learning | 5 |
-| MLP-based Models | 5 |
-| Recurrent Models | 5 |
-| Convolutional Models | 5 |
-| Transformer Models | 5 |
-| Time Series Foundation Models | 5 |
+Notes:
+- Some foundation models require GPU for practical runtimes.
+- TimeGPT requires an API key (see below).
 
----
+### 2) Run a model class script
 
-# 1. Statistical & Machine Learning Models
+Each script runs all models in that class and stores results under [results](results).
 
-These models rely on classical statistical assumptions or traditional machine learning techniques. They are typically **computationally efficient**, easy to interpret, and often serve as **strong baseline models**.
+```bash
+python models/models_statsml.py
+python models/models_neuralforecast.py
+python models/models_gluonts.py
+python models/model_mamba.py
+python models/model_naivedrift.py
+python models/fmodel_timegpt.py
+python models/fmodel_timesfm.py
+python models/fmodel_moirai.py
+python models/fmodel_chronos.py
+python models/fmodel_timerxl.py
+```
 
-| Model | Description |
-|------|-------------|
-| [AutoARIMA](https://github.com/alkaline-ml/pmdarima) | Automated implementation of the ARIMA model that selects optimal parameters using statistical tests and information criteria. |
-| [KNN Regression](https://github.com/scikit-learn/scikit-learn) | Instance-based regression model that predicts values based on the most similar historical observations. |
-| [LightGBM](https://github.com/microsoft/LightGBM) | Gradient boosting decision tree framework designed for efficiency and scalability with strong performance on structured data. |
-| [Naive Drift](https://github.com/robjhyndman/forecast) | Baseline model assuming a linear drift between the first and last observations. |
-| [Naive Moving Average](https://github.com/robjhyndman/forecast) | Forecasts future values by averaging recent historical observations. |
+To switch datasets, edit the `selected_dataset` value in the relevant script.
 
-**Characteristics**
+## Datasets
 
-- Simple and interpretable  
-- Low computational requirements  
-- Often strong baseline performance
+Datasets are loaded via [models/dataset_config.py](models/dataset_config.py). File locations used by the loaders:
 
----
+- Belgium PV and battery datasets: [data/belgium_dataset](data/belgium_dataset)
+- Germany WPUQ (SFH19): [data/germany_wpuq_dataset/SFH19_2023_2024_15min_3_month.csv](data/germany_wpuq_dataset/SFH19_2023_2024_15min_3_month.csv)
+- London smart meter dataset: [data/london_dataset/LCL_london_consumption_2013.csv](data/london_dataset/LCL_london_consumption_2013.csv)
+- Zonnedael dataset: [data/zonnedael_dataset/liander_zonnedael_2013_original.csv](data/zonnedael_dataset/liander_zonnedael_2013_original.csv)
 
-# 2. MLP-Based Models
+## Model Catalog (30 Models)
 
-MLP-based models use **feedforward neural networks** to map historical input windows directly to future predictions. They capture nonlinear relationships but lack explicit sequential memory.
+Each model lists its primary library and a clickable GitHub repository. Scripts are linked for direct execution.
 
-| Model | Description |
-|------|-------------|
-| [DeepNPTS](https://github.com/awslabs/gluonts) | Non-parametric probabilistic forecasting model that samples predictions directly from historical distributions. |
-| [N-BEATS](https://github.com/ServiceNow/N-BEATS) | Deep residual architecture that decomposes time series into interpretable trend and seasonal components. |
-| [NHITS](https://github.com/Nixtla/neuralforecast) | Hierarchical interpolation model extending N-BEATS to capture multi-scale temporal patterns. |
-| [NLinear](https://github.com/cure-lab/LTSF-Linear) | Lightweight linear forecasting model designed for long-term forecasting tasks. |
-| [TiDE](https://github.com/google-research/google-research/tree/master/tide) | Encoder–decoder architecture using dense layers to process historical values and covariates efficiently. |
+### 1) Statistical and Machine Learning (5)
 
-**Characteristics**
+| Model | Library | Repository | Script |
+|------|---------|------------|--------|
+| AutoARIMA | pmdarima | https://github.com/alkaline-ml/pmdarima | [models/models_statsml.py](models/models_statsml.py) |
+| KNN Regression | scikit-learn | https://github.com/scikit-learn/scikit-learn | [models/models_statsml.py](models/models_statsml.py) |
+| LightGBM | LightGBM | https://github.com/microsoft/LightGBM | [models/models_statsml.py](models/models_statsml.py) |
+| Naive Drift | custom (numpy, pandas) | https://github.com/numpy/numpy | [models/model_naivedrift.py](models/model_naivedrift.py) |
+| Naive Moving Average | custom (numpy, pandas) | https://github.com/pandas-dev/pandas | [models/models_statsml.py](models/models_statsml.py) |
 
-- Efficient training  
-- Strong nonlinear modeling capability  
-- Limited temporal memory
+### 2) MLP-based Models (5)
 
----
+| Model | Library | Repository | Script |
+|------|---------|------------|--------|
+| DeepNPTS | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
+| N-BEATS | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
+| NHITS | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
+| NLinear | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
+| TiDE | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
 
-# 3. Recurrent Neural Network Models
+### 3) Recurrent Neural Networks (5)
 
-Recurrent architectures explicitly model **temporal dependencies** using sequential structures such as LSTM, GRU, or state-space mechanisms.
+| Model | Library | Repository | Script |
+|------|---------|------------|--------|
+| DeepAR | GluonTS | https://github.com/awslabs/gluonts | [models/models_gluonts.py](models/models_gluonts.py) |
+| DeepFactor | GluonTS | https://github.com/awslabs/gluonts | [models/models_gluonts.py](models/models_gluonts.py) |
+| MQ-RNN | GluonTS | https://github.com/awslabs/gluonts | [models/models_gluonts.py](models/models_gluonts.py) |
+| Mamba | mamba-ssm | https://github.com/state-spaces/mamba | [models/model_mamba.py](models/model_mamba.py) |
+| Temporal Fusion Transformer (TFT) | GluonTS | https://github.com/awslabs/gluonts | [models/models_gluonts.py](models/models_gluonts.py) |
 
-| Model | Description |
-|------|-------------|
-| [DeepAR](https://github.com/awslabs/gluonts) | Probabilistic autoregressive RNN model designed for large-scale time series forecasting. |
-| [DeepFactor](https://github.com/awslabs/gluonts) | Combines global deep neural networks with local probabilistic models. |
-| [MQ-RNN](https://github.com/awslabs/gluonts) | Recurrent architecture designed for multi-horizon quantile forecasting. |
-| [Mamba](https://github.com/state-spaces/mamba) | State-space sequence model designed for efficient long-sequence modeling. |
-| [Temporal Fusion Transformer (TFT)](https://github.com/google-research/google-research/tree/master/tft) | Hybrid architecture combining recurrent layers and attention mechanisms for interpretable forecasting. |
+### 4) Convolutional Neural Networks (5)
 
-**Characteristics**
+| Model | Library | Repository | Script |
+|------|---------|------------|--------|
+| TCN | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
+| BiTCN | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
+| TimesNet | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
+| WaveNet | GluonTS | https://github.com/awslabs/gluonts | [models/models_gluonts.py](models/models_gluonts.py) |
+| MQ-CNN | GluonTS | https://github.com/awslabs/gluonts | [models/models_gluonts.py](models/models_gluonts.py) |
 
-- Effective at capturing temporal dependencies  
-- Strong sequential modeling capabilities  
-- Higher computational cost compared to simple neural models
+### 5) Transformer-based Models (5)
 
----
+| Model | Library | Repository | Script |
+|------|---------|------------|--------|
+| Informer | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
+| PatchTST | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
+| iTransformer | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
+| Vanilla Transformer | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
+| TimeXer | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
 
-# 4. Convolutional Neural Network Models
+### 6) Time Series Foundation Models (5)
 
-CNN-based models apply **causal and dilated convolutions** to capture temporal patterns efficiently while allowing parallel computation.
+| Model | Library | Repository | Script |
+|------|---------|------------|--------|
+| TimeGPT | nixtla | https://github.com/Nixtla/nixtla | [models/fmodel_timegpt.py](models/fmodel_timegpt.py) |
+| TimesFM | timesfm | https://github.com/google-research/timesfm | [models/fmodel_timesfm.py](models/fmodel_timesfm.py) |
+| MOIRAI | uni2ts | https://github.com/SalesforceAIResearch/uni2ts | [models/fmodel_moirai.py](models/fmodel_moirai.py) |
+| Chronos | chronos-forecasting | https://github.com/amazon-science/chronos-forecasting | [models/fmodel_chronos.py](models/fmodel_chronos.py) |
+| Timer-XL | transformers | https://github.com/huggingface/transformers | [models/fmodel_timerxl.py](models/fmodel_timerxl.py) |
 
-| Model | Description |
-|------|-------------|
-| [TCN](https://github.com/locuslab/TCN) | Temporal convolutional network using dilated causal convolutions to capture long-range dependencies. |
-| [BiTCN](https://github.com/Nixtla/neuralforecast) | Bidirectional TCN architecture capturing forward and backward temporal information. |
-| [TimesNet](https://github.com/thuml/TimesNet) | Converts time series into 2D representations to model periodic patterns using convolutional operations. |
-| [WaveNet](https://github.com/ibab/tensorflow-wavenet) | Dilated convolution architecture originally developed for audio generation and adapted for forecasting tasks. |
-| [MQ-CNN](https://github.com/awslabs/gluonts) | CNN-based architecture designed for multi-horizon quantile forecasting. |
+## Model-specific Notes
 
-**Characteristics**
+- TimeGPT requires a valid API key in [models/fmodel_timegpt.py](models/fmodel_timegpt.py).
+- Timer-XL uses Hugging Face model IDs. Edit the `model_configs` mapping in [models/fmodel_timerxl.py](models/fmodel_timerxl.py) to switch models.
+- Chronos, TimesFM, and MOIRAI may download weights on first run.
 
-- Efficient parallel computation  
-- Strong local pattern detection  
-- Good scalability for large datasets
+## Results
 
----
+All model outputs are saved under [results](results) with per-run CSVs, plots, and metrics summaries. The plotting and metrics utilities are in [models/utils.py](models/utils.py) and [models/plots.py](models/plots.py).
 
-# 5. Transformer-Based Models
-
-Transformer architectures leverage **self-attention mechanisms** to model long-range dependencies without recurrence.
-
-| Model | Description |
-|------|-------------|
-| [Informer](https://github.com/zhouhaoyi/Informer2020) | Efficient transformer architecture using ProbSparse attention for long sequence forecasting. |
-| [PatchTST](https://github.com/yuqinie98/PatchTST) | Transformer model using patch-based tokenization to improve efficiency and performance. |
-| [iTransformer](https://github.com/thuml/iTransformer) | Transformer variant that treats variables as tokens to improve multivariate correlation modeling. |
-| [Vanilla Transformer](https://github.com/huggingface/transformers) | Standard transformer architecture adapted for time series forecasting tasks. |
-| [TimeXer](https://github.com/thuml/TimeXer) | Transformer architecture designed to integrate exogenous variables through cross-attention mechanisms. |
-
-**Characteristics**
-
-- Excellent long-range dependency modeling  
-- Flexible attention mechanisms  
-- High computational requirements for long sequences
-
----
-
-# 6. Time Series Foundation Models
-
-Time Series Foundation Models (TSFMs) are **large-scale pre-trained models trained on massive datasets**, enabling **zero-shot forecasting** without task-specific training.
-
-| Model | Description |
-|------|-------------|
-| [TimeGPT](https://github.com/Nixtla/nixtla) | Transformer-based foundation model trained on large time-series datasets for zero-shot forecasting. |
-| [TimesFM](https://github.com/google-research/timesfm) | Patch-based transformer architecture optimized for scalable long-horizon forecasting. |
-| [MOIRAI](https://github.com/SalesforceAIResearch/moirai) | Universal forecasting transformer supporting multivariate time series and long prediction horizons. |
-| [Chronos](https://github.com/amazon-science/chronos-forecasting) | Token-based transformer model trained on quantized time-series data. |
-| [Timer-XL](https://github.com/thuml/Large-Time-Series-Model) | Long-context transformer model designed for capturing both intra-series and inter-series dependencies. |
-
-**Characteristics**
-
-- Pre-trained on massive datasets  
-- Capable of zero-shot or few-shot forecasting  
-- High computational requirements
-
----
-
-# Summary
-
-The benchmark evaluates **30 forecasting models** spanning classical statistical approaches, deep learning architectures, and modern foundation models.
-
-Key observations:
-
-- Classical machine learning models such as **LightGBM** remain highly competitive.
-- Deep learning models such as **DeepNPTS** and **DeepAR** show strong performance across tasks.
-- Foundation models such as **Timer-XL** demonstrate promising **zero-shot forecasting capabilities**.
-- Foundation models often produce **smoother forecasts without task-specific training**.
-
----
-
-# Citation
+## Citation
 
 If you use this benchmark or repository in your research, please cite the corresponding paper.
