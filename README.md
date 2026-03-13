@@ -8,6 +8,11 @@ This project benchmarks 30 time series forecasting models across six methodologi
 - Multiple household energy datasets (PV, battery, and load)
 - Reproducible runs with per-model logging, plots, and CSV outputs
 
+## Figures
+
+![Forecast models timeline](figures/forcast_models_timeline.png)
+![Survey method overview](figures/survey_method.png)
+
 ## Quick Start
 
 ### 1) Create environment and install dependencies

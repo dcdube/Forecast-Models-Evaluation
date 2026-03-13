@@ -26,5 +26,7 @@ lightning_logs/
 
 # Results and figures
 results/
-figures/
+data/belgium_dataset/figures/
+data/london_dataset/figures/
+data/zonnedael_dataset/figures/
 
