@@ -103,10 +103,6 @@ def neural_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon, nf
     )
     return nf, mae, rmse, mape, r2
 
-# Train load model
-def train_load_model(load_data, save_dir, freq, forecast_horizon, nf_model_name, NFmodel):
-    return neural_forecast_model(load_data, "Load", save_dir, freq, forecast_horizon, nf_model_name=nf_model_name, NFmodel=NFmodel)
-
 # Train PV model
 def train_pv_model(pv_data, save_dir, house, freq, forecast_horizon, nf_model_name, NFmodel):
     return neural_forecast_model(pv_data, f"PV_house_{house}", save_dir, freq, forecast_horizon, nf_model_name=nf_model_name, NFmodel=NFmodel)

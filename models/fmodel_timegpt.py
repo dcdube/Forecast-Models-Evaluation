@@ -3,7 +3,7 @@ import os
 import warnings
 import logging
 import matplotlib.pyplot as plt
-from utils import calculate_metrics, forecast_plot_and_csv, setup_logger, plot_model_metrics
+from utils import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from dataset_config import (
     DatasetBelgiumNF,
     DatasetGermanyNF,
@@ -100,24 +100,19 @@ def timegpt_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon):
     )
     return mae, rmse, mape, r2
 
-# Train each target (load, PV, battery) for Belgium
-def train_load_model(load_data, save_dir, freq, forecast_horizon):
-    return timegpt_forecast_model(load_data, "Load", save_dir, freq, forecast_horizon)
-
+# Train each target (load, PV, battery) 
 def train_pv_model(pv_data, save_dir, house, freq, forecast_horizon):
     return timegpt_forecast_model(pv_data, f"PV_house_{house}", save_dir, freq, forecast_horizon)
 
 def train_battery_model(battery_data, save_dir, house, freq, forecast_horizon):
     return timegpt_forecast_model(battery_data, f"BESS_house_{house}", save_dir, freq, forecast_horizon)
 
-# Train London load
 def train_london_model(load_data, save_dir, freq, forecast_horizon):
     return timegpt_forecast_model(load_data, "london_load", save_dir, freq, forecast_horizon)
 
 def train_germany_model(load_data, save_dir, freq, forecast_horizon):
     return timegpt_forecast_model(load_data, "germany_load", save_dir, freq, forecast_horizon)
 
-# Train Zonnedael customers
 def train_zonnedael_model(customer_id, data_df, save_dir, freq, forecast_horizon):
     return timegpt_forecast_model(data_df, f"zonnedael_customer_{customer_id}", save_dir, freq, forecast_horizon)
 

@@ -22,19 +22,17 @@ from gluonts.model.wavenet import WaveNetEstimator
 from gluonts.model.tft import TemporalFusionTransformerEstimator
 from gluonts.model.deepar import DeepAREstimator
 
-# ============================
+# =========================================================================================
 # Dataset Selection Toggle
 selected_dataset = "belgium"  # Options: "belgium" or "germany" or "london" or "zonnedael"
 dataset_belgium = DatasetBelgiumNF()
 dataset_germany = DatasetGermanyNF()
 dataset_london = DatasetLondonNF()
 dataset_zonnedael = DatasetZonnedaelNF()
-n_epochs = 100  # Number of epochs for training
-# ============================
+n_epochs = 100  
+# =========================================================================================
 
-# ========================
 # Supported GluonTS Models
-# ========================
 model_classes = {
     "DeepAR": DeepAREstimator,
     "DeepFactor": DeepFactorEstimator,
@@ -44,9 +42,6 @@ model_classes = {
     "WaveNet": WaveNetEstimator
 }
 
-# ========================
-# Logger Setup
-# ========================
 def setup_model_logger(save_dir):
     os.makedirs(save_dir, exist_ok=True)
     log_file = os.path.join(save_dir, "training_log.txt")
@@ -63,15 +58,9 @@ def setup_model_logger(save_dir):
     )
     logging.info(f"Logger initialized at {log_file}")
 
-# ========================
-# Helper to Convert to ListDataset
-# ========================
 def to_gluonts_dataset(df, freq, start):
     return ListDataset([{"start": start, "target": df["y"].values}], freq=freq)
 
-# ========================
-# Core GluonTS Model Training
-# ========================
 def train_gluonts_model(y_df, model_name, save_dir, model_class, sampling_rate, forecast_horizon, freq):
     current_seed = int(time.time()) % (2**32 - 1)
     logging.info(f"Using random seed: {current_seed}")
@@ -115,33 +104,21 @@ def train_gluonts_model(y_df, model_name, save_dir, model_class, sampling_rate, 
     )
     return predictor, mae, rmse, mape, r2
 
-# ========================
-# Wrapper Functions (Belgium)
-# ========================
-def train_load_model(load_data, save_dir, model_name, model_class, sampling_rate, forecast_horizon, freq):
-    return train_gluonts_model(load_data, "Load", save_dir, model_class, sampling_rate, forecast_horizon, freq)
-
-def train_pv_model(pv_data, save_dir, house, model_name, model_class, sampling_rate, forecast_horizon, freq):
+def train_pv_model(pv_data, save_dir, house, model_class, sampling_rate, forecast_horizon, freq):
     return train_gluonts_model(pv_data, f"PV_house_{house}", save_dir, model_class, sampling_rate, forecast_horizon, freq)
 
-def train_battery_model(battery_data, save_dir, house, model_name, model_class, sampling_rate, forecast_horizon, freq):
+def train_battery_model(battery_data, save_dir, house, model_class, sampling_rate, forecast_horizon, freq):
     return train_gluonts_model(battery_data, f"BESS_house_{house}", save_dir, model_class, sampling_rate, forecast_horizon, freq)
 
-# ========================
-# Wrapper Functions (London Zonnedael)
-# ========================
-def train_london_model(load_data, save_dir, model_name, model_class, sampling_rate, forecast_horizon, freq):
+def train_london_model(load_data, save_dir, model_class, sampling_rate, forecast_horizon, freq):
     return train_gluonts_model(load_data, "london_load", save_dir, model_class, sampling_rate, forecast_horizon, freq)
 
-def train_germany_model(load_data, save_dir, model_name, model_class, sampling_rate, forecast_horizon, freq):
+def train_germany_model(load_data, save_dir, model_class, sampling_rate, forecast_horizon, freq):
     return train_gluonts_model(load_data, "germany_load", save_dir, model_class, sampling_rate, forecast_horizon, freq)
 
-def train_zonnedael_model(customer_id, data_df, save_dir, model_name, model_class, sampling_rate, forecast_horizon, freq):
+def train_zonnedael_model(customer_id, data_df, save_dir, model_class, sampling_rate, forecast_horizon, freq):
     return train_gluonts_model(data_df, f"zonnedael_customer_{customer_id}", save_dir, model_class, sampling_rate, forecast_horizon, freq)
 
-# ========================
-# Full Model Training Routine
-# ========================
 def train_all_models(start_dt, end_dt, save_dir, model_name, model_class, sampling_rate):
     setup_model_logger(save_dir)
     metrics = []
@@ -194,15 +171,12 @@ def train_all_models(start_dt, end_dt, save_dir, model_name, model_class, sampli
     logging.info("...End training...")
     logging.info(f"Training completed in {elapsed_time:.2f} seconds.")
 
-# ========================
-# Run All Selected Models
-# ========================
 def paper_forecasting_train():
     warnings.filterwarnings("ignore", category=pd.errors.PerformanceWarning)
     start_dt = pd.Timestamp("2024-01-01 00:00:00", tz="UTC")
     end_dt = pd.Timestamp("2024-04-01 00:00:00", tz="UTC")
 
-    for sampling_rate in [100/3, 50, 100]:
+    for sampling_rate in [25, 100/3, 50, 100]:
         for model_name, model_class in model_classes.items():
             for run_num in range(1, 11):  # Run 10 times
                 try:
@@ -221,8 +195,5 @@ def paper_forecasting_train():
                     logging.error(f"Skipping model {model_name} run {run_num} at sampling {sampling_rate}% due to error: {str(e)}", exc_info=True)
                     continue
 
-# ========================
-# Entry Point
-# ========================
 if __name__ == "__main__":
     paper_forecasting_train()

@@ -7,7 +7,13 @@ import gc
 from sklearn.neighbors import KNeighborsRegressor
 import lightgbm as lgb
 import pmdarima as pm
-from dataset_config import DatasetBelgium1D, DatasetGermany1D, DatasetLondon1D, DatasetZonnedael1D
+from dataset_config import (
+    DatasetBelgium1D, 
+    DatasetGermany1D, 
+    DatasetLondon1D, 
+    DatasetZonnedael1D
+)
+
 from utils import split_train_test, calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 
 # ============================ Dataset Selection Toggle ===================================
@@ -140,7 +146,6 @@ def generic_model(X, y, model_name, save_dir, model_type, run_num, sampling_rate
         forecast_plot_and_csv(df_plot, model_name, save_dir)
         return model, mae, rmse, mape, r2
 
-# ==================================================DatasetBelgium1D============================================================
 def train_pv_model(start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon):
     if model_type in ["NaiveMovingAverage", "ARIMA"]:
         y = dataset_belgium.get_pv_data(house, start_dt, end_dt)[1]
@@ -157,7 +162,6 @@ def train_battery_model(start_dt, end_dt, save_dir, house, model_type, run_num, 
         X, y = dataset_belgium.get_battery_data(house, start_dt, end_dt)
         return generic_model(X, y, f"bess_house_{house}", save_dir, model_type, run_num, sampling_rate, forecast_horizon)
 
-# ================================================DatasetLondonZonnedael1D=========================================================
 def train_london_consumption_model(save_dir, model_type, run_num, sampling_rate, forecast_horizon):
     if model_type in ["NaiveMovingAverage", "ARIMA"]:
         y = dataset_london.get_load_data()[1]
@@ -253,7 +257,7 @@ if __name__ == "__main__":
         "NaiveMovingAverage",
     ]
 
-    for sampling_rate in [25, 50, 100/3, 100]:
+    for sampling_rate in [25, 100/3, 50, 100]:
         for model_type in model_types:
             n_runs = 1 if model_type in deterministic_models else 10
             for run_num in range(1, n_runs + 1):

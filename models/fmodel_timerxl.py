@@ -2,8 +2,7 @@ import pandas as pd
 import os
 import warnings
 import logging
-import matplotlib.pyplot as plt
-from utils import calculate_metrics, forecast_plot_and_csv, setup_logger, plot_model_metrics
+from utils import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from dataset_config import (
     DatasetBelgiumNF,
     DatasetGermanyNF,
@@ -17,25 +16,13 @@ from transformers import AutoModelForCausalLM
 warnings.filterwarnings("ignore", category=FutureWarning, module="huggingface_hub.file_download")
 
 # ============================ Dataset Selection Toggle ===================================
-selected_dataset = "belgium"  # Options: "belgium" or "germany" or "london" or "zonnedael"
+selected_dataset = "london"  # Options: "belgium" or "germany" or "london" or "zonnedael"
 
 dataset_belgium = DatasetBelgiumNF()
 dataset_germany = DatasetGermanyNF()
 dataset_london = DatasetLondonNF()
 dataset_zonnedael = DatasetZonnedaelNF()
 # =========================================================================================
-
-# Choose dataset instance based on toggle
-if selected_dataset == "belgium":
-    dataset = dataset_belgium
-elif selected_dataset == "germany":
-    dataset = dataset_germany
-elif selected_dataset == "london":
-    dataset = dataset_london
-elif selected_dataset == "zonnedael":
-    dataset = dataset_zonnedael
-else:
-    raise ValueError(f"Unknown selected_dataset: {selected_dataset}")
 
 # Logger setup
 def setup_model_logger(save_dir):
@@ -89,9 +76,6 @@ def hf_causal_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon,
     return mae, rmse, mape, r2
 
 # Train each target based on selected dataset
-def train_load_model(load_data, save_dir, freq, forecast_horizon, model_id):
-    return hf_causal_forecast_model(load_data, "Load", save_dir, freq, forecast_horizon, model_id)
-
 def train_pv_model(pv_data, save_dir, house, freq, forecast_horizon, model_id):
     return hf_causal_forecast_model(pv_data, f"PV_house_{house}", save_dir, freq, forecast_horizon, model_id)
 
@@ -117,28 +101,28 @@ def train_all_models(start_dt, end_dt, save_dir, freq, forecast_horizon, model_i
 
     if selected_dataset == "belgium":
         for house in [1, 2, 3, 4]:
-            pv_data = dataset.get_inputs_for_pv(house, start_dt, end_dt)
+            pv_data = dataset_belgium.get_inputs_for_pv(house, start_dt, end_dt)
             pv_mae, pv_rmse, pv_mape, pv_r2 = train_pv_model(pv_data, save_dir, house, freq, forecast_horizon, model_id)
             metrics.append({"model": f"pv_house_{house}", "MAE": pv_mae, "RMSE": pv_rmse, "MAPE": pv_mape, "R2": pv_r2})
 
         for house in [1, 2, 3, 4]:
-            battery_data = dataset.get_inputs_for_battery(house, start_dt, end_dt)
+            battery_data = dataset_belgium.get_inputs_for_battery(house, start_dt, end_dt)
             battery_mae, battery_rmse, battery_mape, battery_r2 = train_battery_model(battery_data, save_dir, house, freq, forecast_horizon, model_id)
             metrics.append({"model": f"bess_house_{house}", "MAE": battery_mae, "RMSE": battery_rmse, "MAPE": battery_mape, "R2": battery_r2})
 
     elif selected_dataset == "germany":
-        load_data = dataset.get_inputs_for_load(start_dt, end_dt)
+        load_data = dataset_germany.get_inputs_for_load(start_dt, end_dt)
         load_mae, load_rmse, load_mape, load_r2 = train_germany_load_model(load_data, save_dir, freq, forecast_horizon, model_id)
         metrics.append({"model": "germany_load", "MAE": load_mae, "RMSE": load_rmse, "MAPE": load_mape, "R2": load_r2})
 
     elif selected_dataset == "london":
-        load_data = dataset.get_inputs_for_load()
+        load_data = dataset_london.get_inputs_for_load()
         load_mae, load_rmse, load_mape, load_r2 = train_london_load_model(load_data, save_dir, freq, forecast_horizon, model_id)
         metrics.append({"model": "london_load", "MAE": load_mae, "RMSE": load_rmse, "MAPE": load_mape, "R2": load_r2})
 
     elif selected_dataset == "zonnedael":
         for customer_id in [8, 9, 43]:
-            data_df = dataset.get_inputs_for_zonnedael_consumption(customer_id)
+            data_df = dataset_zonnedael.get_inputs_for_zonnedael_consumption(customer_id)
             cust_mae, cust_rmse, cust_mape, cust_r2 = train_zonnedael_customer_model(customer_id, data_df, save_dir, freq, forecast_horizon, model_id)
             metrics.append({"model": f"zonnedael_customer_{customer_id}", "MAE": cust_mae, "RMSE": cust_rmse, "MAPE": cust_mape, "R2": cust_r2})
 
@@ -175,8 +159,7 @@ def paper_forecasting_train(run_num, sampling_rate_local, model_id, save_folder)
 # Run all sampling rates and models
 if __name__ == "__main__":
     model_configs = {
-        'thuml/timer-base-84m': 'TimerXL',
-        'thuml/sundial-base-128m': 'Sundial',
+        'thuml/timer-base-84m': 'TimerXL'
     }
     for model_id, save_folder in model_configs.items():
         for sampling_rate in [25, 100/3, 50, 100]:

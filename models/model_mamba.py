@@ -26,7 +26,6 @@ dataset_zonnedael = DatasetZonnedaelNF()
 n_epochs = 100
 # =========================================================================================
 
-# ============================ Mamba Model Wrapper ========================================
 class MambaForecaster(nn.Module):
     def __init__(self, d_model, d_state, d_conv, expand, forecast_horizon):
         super().__init__()
@@ -44,7 +43,6 @@ class MambaForecaster(nn.Module):
         last_state = y[:, -1, :]
         return self.head(last_state)
 
-# ============================ Logger Setup ===============================================
 def setup_model_logger(save_dir):
     os.makedirs(save_dir, exist_ok=True)
     log_file = os.path.join(save_dir, "training_log.txt")
@@ -151,16 +149,12 @@ def mamba_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon, sam
     return mae, rmse, mape, r2
 
 # Train each target (load, PV, battery)
-def train_load_model(load_data, save_dir, freq, forecast_horizon, sampling_rate):
-    return mamba_forecast_model(load_data, "Load", save_dir, freq, forecast_horizon, sampling_rate)
-
 def train_pv_model(pv_data, save_dir, house, freq, forecast_horizon, sampling_rate):
     return mamba_forecast_model(pv_data, f"PV_house_{house}", save_dir, freq, forecast_horizon, sampling_rate)
 
 def train_battery_model(battery_data, save_dir, house, freq, forecast_horizon, sampling_rate):
     return mamba_forecast_model(battery_data, f"BESS_house_{house}", save_dir, freq, forecast_horizon, sampling_rate)
 
-# London-Zonnedael training functions
 def train_london_model(load_data, save_dir, freq, forecast_horizon, sampling_rate):
     return mamba_forecast_model(load_data, "london_load", save_dir, freq, forecast_horizon, sampling_rate)
 

@@ -51,7 +51,7 @@ def setup_model_logger(save_dir):
     logging.info(f"Logger initialized at {log_file}")
 
 # Core function for Chronos forecasting
-def chronos_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon):
+def chronos_forecast_model(y_df, model_name, save_dir, forecast_horizon):
     y_df = y_df.iloc[::int(100/sampling_rate)]
     train_df = y_df.iloc[:-forecast_horizon]
     test_df = y_df.iloc[-forecast_horizon:]
@@ -81,10 +81,6 @@ def chronos_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon):
         model_name, save_dir
     )
     return mae, rmse, mape, r2
-
-# Train Belgium models
-def train_load_model(load_data, save_dir, freq, forecast_horizon):
-    return chronos_forecast_model(load_data, "Load", save_dir, freq, forecast_horizon)
 
 def train_pv_model(pv_data, save_dir, house, freq, forecast_horizon):
     return chronos_forecast_model(pv_data, f"PV_house_{house}", save_dir, freq, forecast_horizon)

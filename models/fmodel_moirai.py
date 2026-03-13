@@ -130,16 +130,12 @@ def moirai_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon, sa
     return mae, rmse, mape, r2
 
 # Train each target (load, PV, battery)
-def train_load_model(load_data, save_dir, freq, forecast_horizon, sampling_rate):
-    return moirai_forecast_model(load_data, "Load", save_dir, freq, forecast_horizon, sampling_rate)
-
 def train_pv_model(pv_data, save_dir, house, freq, forecast_horizon, sampling_rate):
     return moirai_forecast_model(pv_data, f"PV_house_{house}", save_dir, freq, forecast_horizon, sampling_rate)
 
 def train_battery_model(battery_data, save_dir, house, freq, forecast_horizon, sampling_rate):
     return moirai_forecast_model(battery_data, f"BESS_house_{house}", save_dir, freq, forecast_horizon, sampling_rate)
 
-# London-Zonnedael specific functions 
 def train_london_model(load_data, save_dir, freq, forecast_horizon, sampling_rate):
     return moirai_forecast_model(load_data, "london_load", save_dir, freq, forecast_horizon, sampling_rate)
 

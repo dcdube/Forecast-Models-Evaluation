@@ -32,9 +32,6 @@ class NaiveDrift:
         self.freq = None
 
     def fit(self, df):
-        """
-        df: pandas DataFrame with columns ['ds', 'y'] sorted ascending by 'ds'
-        """
         y = df['y'].values
         n = len(y)
         if n < 2:
@@ -49,10 +46,6 @@ class NaiveDrift:
         self.noise_std = np.std(residuals) if len(residuals) > 1 else 0
 
     def predict(self, h):
-        """
-        h: forecast horizon (int)
-        Returns a DataFrame with columns ['ds', 'NaiveDrift'] containing the forecast with noise
-        """
         if self.last_ds is None or self.freq is None:
             raise ValueError("Must call fit and set frequency before predict")
 
@@ -129,9 +122,6 @@ def generic_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon, n
         save_dir
     )
     return None, mae, rmse, mape, r2
-
-def train_load_model(load_data, save_dir, freq, forecast_horizon, nf_model_name, NFmodel):
-    return generic_forecast_model(load_data, "Load", save_dir, freq, forecast_horizon, nf_model_name, NFmodel)
 
 def train_pv_model(pv_data, save_dir, house, freq, forecast_horizon, nf_model_name, NFmodel):
     return generic_forecast_model(pv_data, f"PV_house_{house}", save_dir, freq, forecast_horizon, nf_model_name, NFmodel)
@@ -216,6 +206,6 @@ def paper_forecasting_train(run_num, sampling_rate):
             continue
 
 if __name__ == "__main__":
-    for sampling_rate in [25, 50, 100/3, 100]:
+    for sampling_rate in [25, 100/3, 50, 100]:
         for run_num in range(1, 2):
             paper_forecasting_train(run_num, sampling_rate)

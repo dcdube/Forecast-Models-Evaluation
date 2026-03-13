@@ -2,8 +2,7 @@ import pandas as pd
 import os
 import warnings
 import logging
-import matplotlib.pyplot as plt
-from utils import calculate_metrics, forecast_plot_and_csv, setup_logger, plot_model_metrics
+from utils import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from dataset_config import (
     DatasetBelgiumNF,
     DatasetGermanyNF,
@@ -43,7 +42,7 @@ def setup_model_logger(save_dir):
     logging.info(f"Logger initialized at {log_file}")
 
 # Core function for TimesFM
-def timesfm_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon, tfm, sampling_rate):
+def timesfm_forecast_model(y_df, model_name, save_dir, forecast_horizon, tfm, sampling_rate):
     y_df = y_df.iloc[::int(100 / sampling_rate)]
     train_df = y_df.iloc[:-forecast_horizon]
     test_df = y_df.iloc[-forecast_horizon:]
@@ -68,17 +67,12 @@ def timesfm_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon, t
     )
     return mae, rmse, mape, r2
 
-# Belgium training functions
-def train_load_model(load_data, save_dir, freq, forecast_horizon, tfm, sampling_rate):
-    return timesfm_forecast_model(load_data, "Load", save_dir, freq, forecast_horizon, tfm, sampling_rate)
-
 def train_pv_model(pv_data, save_dir, house, freq, forecast_horizon, tfm, sampling_rate):
     return timesfm_forecast_model(pv_data, f"PV_house_{house}", save_dir, freq, forecast_horizon, tfm, sampling_rate)
 
 def train_battery_model(battery_data, save_dir, house, freq, forecast_horizon, tfm, sampling_rate):
     return timesfm_forecast_model(battery_data, f"BESS_house_{house}", save_dir, freq, forecast_horizon, tfm, sampling_rate)
 
-# London-Zonnedael training functions
 def train_london_model(load_data, save_dir, freq, forecast_horizon, tfm, sampling_rate):
     return timesfm_forecast_model(load_data, "london_load", save_dir, freq, forecast_horizon, tfm, sampling_rate)
 
