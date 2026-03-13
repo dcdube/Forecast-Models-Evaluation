@@ -126,4 +126,4 @@ Each model lists its primary library and a GitHub repository. Scripts are linked
 
 ## Results
 
-All model outputs are saved in the `results` folder with per-run plots and metrics summaries. The plotting and metrics utilities are in [models/utils.py](models/utils.py) and [models/plots.py](models/plots.py).
+All model outputs are saved in the `results` folder with per-run plots and metrics summaries. The plotting and metrics utilities are in [models/utils.py](models/utils.py) and [models/plots.py](models/plots.py). Please refer to our paper for the results.
