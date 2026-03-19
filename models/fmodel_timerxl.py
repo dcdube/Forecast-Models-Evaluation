@@ -66,14 +66,14 @@ def hf_causal_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon,
         y_pred = y_pred.ravel()
         y_true = y_true.ravel()
 
-    mae, rmse, mape, r2 = calculate_metrics(y_pred, y_true)
-    logging.info(f"{model_name} - MAE: {mae:.4f}, RMSE: {rmse:.4f}, MAPE: {mape:.4f}, R2: {r2:.4f}")
+    mae, rmse = calculate_metrics(y_pred, y_true)
+    logging.info(f"{model_name} - MAE: {mae:.4f}, RMSE: {rmse:.4f}")
 
     forecast_plot_and_csv(
         pd.DataFrame({"datetime": test_df["ds"], "Actual": y_true, "Forecast": y_pred}).set_index("datetime"),
         model_name, save_dir
     )
-    return mae, rmse, mape, r2
+    return mae, rmse
 
 # Train each target based on selected dataset
 def train_pv_model(pv_data, save_dir, house, freq, forecast_horizon, model_id):
@@ -102,29 +102,29 @@ def train_all_models(start_dt, end_dt, save_dir, freq, forecast_horizon, model_i
     if selected_dataset == "belgium":
         for house in [1, 2, 3, 4]:
             pv_data = dataset_belgium.get_inputs_for_pv(house, start_dt, end_dt)
-            pv_mae, pv_rmse, pv_mape, pv_r2 = train_pv_model(pv_data, save_dir, house, freq, forecast_horizon, model_id)
-            metrics.append({"model": f"pv_house_{house}", "MAE": pv_mae, "RMSE": pv_rmse, "MAPE": pv_mape, "R2": pv_r2})
+            pv_mae, pv_rmse = train_pv_model(pv_data, save_dir, house, freq, forecast_horizon, model_id)
+            metrics.append({"model": f"pv_house_{house}", "MAE": pv_mae, "RMSE": pv_rmse})
 
         for house in [1, 2, 3, 4]:
             battery_data = dataset_belgium.get_inputs_for_battery(house, start_dt, end_dt)
-            battery_mae, battery_rmse, battery_mape, battery_r2 = train_battery_model(battery_data, save_dir, house, freq, forecast_horizon, model_id)
-            metrics.append({"model": f"bess_house_{house}", "MAE": battery_mae, "RMSE": battery_rmse, "MAPE": battery_mape, "R2": battery_r2})
+            battery_mae, battery_rmse = train_battery_model(battery_data, save_dir, house, freq, forecast_horizon, model_id)
+            metrics.append({"model": f"bess_house_{house}", "MAE": battery_mae, "RMSE": battery_rmse})
 
     elif selected_dataset == "germany":
         load_data = dataset_germany.get_inputs_for_load(start_dt, end_dt)
-        load_mae, load_rmse, load_mape, load_r2 = train_germany_load_model(load_data, save_dir, freq, forecast_horizon, model_id)
-        metrics.append({"model": "germany_load", "MAE": load_mae, "RMSE": load_rmse, "MAPE": load_mape, "R2": load_r2})
+        load_mae, load_rmse = train_germany_load_model(load_data, save_dir, freq, forecast_horizon, model_id)
+        metrics.append({"model": "germany_load", "MAE": load_mae, "RMSE": load_rmse})
 
     elif selected_dataset == "london":
         load_data = dataset_london.get_inputs_for_load()
-        load_mae, load_rmse, load_mape, load_r2 = train_london_load_model(load_data, save_dir, freq, forecast_horizon, model_id)
-        metrics.append({"model": "london_load", "MAE": load_mae, "RMSE": load_rmse, "MAPE": load_mape, "R2": load_r2})
+        load_mae, load_rmse = train_london_load_model(load_data, save_dir, freq, forecast_horizon, model_id)
+        metrics.append({"model": "london_load", "MAE": load_mae, "RMSE": load_rmse})
 
     elif selected_dataset == "zonnedael":
         for customer_id in [8, 9, 43]:
             data_df = dataset_zonnedael.get_inputs_for_zonnedael_consumption(customer_id)
-            cust_mae, cust_rmse, cust_mape, cust_r2 = train_zonnedael_customer_model(customer_id, data_df, save_dir, freq, forecast_horizon, model_id)
-            metrics.append({"model": f"zonnedael_customer_{customer_id}", "MAE": cust_mae, "RMSE": cust_rmse, "MAPE": cust_mape, "R2": cust_r2})
+            cust_mae, cust_rmse = train_zonnedael_customer_model(customer_id, data_df, save_dir, freq, forecast_horizon, model_id)
+            metrics.append({"model": f"zonnedael_customer_{customer_id}", "MAE": cust_mae, "RMSE": cust_rmse})
 
     pd.DataFrame(metrics).to_csv(os.path.join(save_dir, "model_metrics_summary.csv"), index=False)
     plot_model_metrics(metrics, save_dir)

@@ -8,7 +8,7 @@ import seaborn as sns
 import logging
 from sklearn.preprocessing import MinMaxScaler
 
-# Calculate MAE, RMSE, MAPE metrics
+# Calculate MAE and RMSE metrics
 def calculate_metrics(preds, actuals):
     preds = np.asarray(preds)
     actuals = np.asarray(actuals)
@@ -16,15 +16,7 @@ def calculate_metrics(preds, actuals):
     mae = np.mean(np.abs(preds - actuals))
     rmse = np.sqrt(np.mean((preds - actuals) ** 2))
     
-    safe_actuals = np.where(np.abs(actuals) < 1e-5, 1e-5, actuals)
-    mape = np.mean(np.abs((preds - actuals) / safe_actuals))
-    
-    # r2 = r2_score(actuals, preds)
-    ss_res = np.sum((actuals - preds) ** 2)
-    ss_tot = np.sum((actuals - np.mean(actuals)) ** 2)
-    r2 = 1 - ss_res / ss_tot if ss_tot != 0 else 0.0
-
-    return mae, rmse, mape, r2
+    return mae, rmse
 
 # Save trained model to pickle
 def save_model(model, model_file):
@@ -88,9 +80,9 @@ def plot_model_metrics(metrics, save_dir: str):
         logging.info(f"Saved model metrics to {csv_path}")
 
     # Plotting
-    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
     fig.suptitle("Model Metrics Summary", fontsize=16)
-    metrics_to_plot = ["MAE", "RMSE", "MAPE", "R2"]
+    metrics_to_plot = ["MAE", "RMSE"]
 
     for ax, metric in zip(axes.flatten(), metrics_to_plot):
         sns.barplot(

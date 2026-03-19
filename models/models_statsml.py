@@ -104,12 +104,12 @@ def generic_model(X, y, model_name, save_dir, model_type, run_num, sampling_rate
             raise NotImplementedError(f"{model_type} not supported for univariate.")
 
         y_true = y_test.values
-        mae, rmse, mape, r2 = calculate_metrics(preds, y_true)
-        logging.info(f"{model_name} ({model_type}) - MAE: {mae:.4f}, RMSE: {rmse:.4f}, MAPE: {mape:.4f}, R2: {r2:.4f}")
+        mae, rmse = calculate_metrics(preds, y_true)
+        logging.info(f"{model_name} ({model_type}) - MAE: {mae:.4f}, RMSE: {rmse:.4f}")
 
         df_plot = pd.DataFrame({"datetime": y_test.index, "Actual": y_true, "Forecast": preds}).set_index("datetime")
         forecast_plot_and_csv(df_plot, model_name, save_dir)
-        return model, mae, rmse, mape, r2
+        return model, mae, rmse
 
     else:
         # Multivariate setup
@@ -139,12 +139,12 @@ def generic_model(X, y, model_name, save_dir, model_type, run_num, sampling_rate
         else:
             raise NotImplementedError(f"{model_type} not supported for multivariate models.")
 
-        mae, rmse, mape, r2 = calculate_metrics(preds, y_test)
-        logging.info(f"{model_name} ({model_type}) - MAE: {mae:.4f}, RMSE: {rmse:.4f}, MAPE: {mape:.4f}, R2: {r2:.4f}")
+        mae, rmse = calculate_metrics(preds, y_test)
+        logging.info(f"{model_name} ({model_type}) - MAE: {mae:.4f}, RMSE: {rmse:.4f}")
 
         df_plot = pd.DataFrame({"datetime": y_test.index, "Actual": y_test, "Forecast": preds}).set_index("datetime")
         forecast_plot_and_csv(df_plot, model_name, save_dir)
-        return model, mae, rmse, mape, r2
+        return model, mae, rmse
 
 def train_pv_model(start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon):
     if model_type in ["NaiveMovingAverage", "ARIMA"]:
@@ -185,18 +185,18 @@ def train_zonnedael_consumption_model(save_dir, model_type, run_num, sampling_ra
     for customer_number in customer_ids:
         if model_type in ["NaiveMovingAverage", "ARIMA"]:
             _, y = dataset_zonnedael.get_inputs_for_zonnedael_consumption(customer_number)
-            _, mae, rmse, mape, r2 = generic_model(
+            _, mae, rmse = generic_model(
                 None, y, f"zonnedael_customer_{customer_number}",
                 save_dir, model_type, run_num, sampling_rate, forecast_horizon
             )
         else:
             X, y = dataset_zonnedael.get_inputs_for_zonnedael_consumption(customer_number)
-            _, mae, rmse, mape, r2 = generic_model(
+            _, mae, rmse = generic_model(
                 X, y, f"zonnedael_customer_{customer_number}",
                 save_dir, model_type, run_num, sampling_rate, forecast_horizon
             )
 
-        metrics.append({"model": f"zonnedael_load_{customer_number}", "MAE": mae, "RMSE": rmse, "MAPE": mape, "R2": r2})
+        metrics.append({"model": f"zonnedael_load_{customer_number}", "MAE": mae, "RMSE": rmse})
     return metrics
 
 # Unified training pipeline
@@ -209,20 +209,20 @@ def train_all_models(start_dt, end_dt, save_dir, model_type, run_num, sampling_r
 
     if selected_dataset == "belgium":
         for house in [1, 2, 3, 4]:
-            _, pv_mae, pv_rmse, pv_mape, pv_r2 = train_pv_model(start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon)
-            metrics.append({"model": f"pv_house_{house}", "MAE": pv_mae, "RMSE": pv_rmse, "MAPE": pv_mape, "R2": pv_r2})
+            _, pv_mae, pv_rmse = train_pv_model(start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon)
+            metrics.append({"model": f"pv_house_{house}", "MAE": pv_mae, "RMSE": pv_rmse})
 
         for house in [1, 2, 3, 4]:
-            _, battery_mae, battery_rmse, battery_mape, battery_r2 = train_battery_model(start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon)
-            metrics.append({"model": f"bess_house_{house}", "MAE": battery_mae, "RMSE": battery_rmse, "MAPE": battery_mape, "R2": battery_r2})
+            _, battery_mae, battery_rmse = train_battery_model(start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon)
+            metrics.append({"model": f"bess_house_{house}", "MAE": battery_mae, "RMSE": battery_rmse})
 
     elif selected_dataset == "germany":
-        _, mae, rmse, mape, r2 = train_germany_consumption_model(start_dt, end_dt, save_dir, model_type, run_num, sampling_rate, forecast_horizon)
-        metrics.append({"model": "germany_load", "MAE": mae, "RMSE": rmse, "MAPE": mape, "R2": r2})
+        _, mae, rmse = train_germany_consumption_model(start_dt, end_dt, save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+        metrics.append({"model": "germany_load", "MAE": mae, "RMSE": rmse})
 
     elif selected_dataset == "london":
-        _, mae, rmse, mape, r2 = train_london_consumption_model(save_dir, model_type, run_num, sampling_rate, forecast_horizon)
-        metrics.append({"model": "london_load", "MAE": mae, "RMSE": rmse, "MAPE": mape, "R2": r2})
+        _, mae, rmse = train_london_consumption_model(save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+        metrics.append({"model": "london_load", "MAE": mae, "RMSE": rmse})
 
     elif selected_dataset == "zonnedael":
         zonnedael_metrics = train_zonnedael_consumption_model(save_dir, model_type, run_num, sampling_rate, forecast_horizon)
