@@ -11,7 +11,7 @@ environment-cuda.yml
 
 # Jupyter
 .ipynb_checkpoints/
-models/folder_process.ipynb
+utils/folder_process.ipynb
 
 # VS Code
 .vscode/

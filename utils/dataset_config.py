@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from utils import min_max_normalize
+from models.metrics import min_max_normalize
 from scipy import stats
 
 

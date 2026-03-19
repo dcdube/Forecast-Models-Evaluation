@@ -14,7 +14,7 @@ from dataset_config import (
     DatasetLondonNF,
     DatasetZonnedaelNF,
 )
-from utils import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
+from models.metrics import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 
 # ============================ Dataset Selection Toggle ===================================
 selected_dataset = "belgium"  # Options: "belgium" or "germany" or "london" or "zonnedael"

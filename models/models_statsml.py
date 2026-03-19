@@ -14,7 +14,7 @@ from dataset_config import (
     DatasetZonnedael1D
 )
 
-from utils import split_train_test, calculate_metrics, forecast_plot_and_csv, plot_model_metrics
+from models.metrics import split_train_test, calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 
 # ============================ Dataset Selection Toggle ===================================
 selected_dataset = "belgium"  # Options: "belgium" or "germany" or "london" or "zonnedael"

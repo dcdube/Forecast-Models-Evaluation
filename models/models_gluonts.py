@@ -14,7 +14,7 @@ from dataset_config import (
     DatasetLondonNF,
     DatasetZonnedaelNF,
 )
-from utils import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
+from models.metrics import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from gluonts.model.seq2seq import MQRNNEstimator
 from gluonts.model.seq2seq import MQCNNEstimator
 from gluonts.model.deep_factor import DeepFactorEstimator
