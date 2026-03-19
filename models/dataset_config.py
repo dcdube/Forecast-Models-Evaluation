@@ -56,12 +56,13 @@ class DatasetBelgium1D:
 
         df = pd.read_csv(pv_file, parse_dates=["datetime"])
         df = df[(df["datetime"] >= start_dt) & (df["datetime"] < end_dt)]
+        df = df.sort_values("datetime").set_index("datetime")
 
         df["y"] = min_max_normalize(df[["SolarPv_0 (kW)"]])
 
-        df["hour"] = df["datetime"].dt.hour
-        df["minute"] = df["datetime"].dt.minute
-        df["dayofweek"] = df["datetime"].dt.dayofweek
+        df["hour"] = df.index.hour
+        df["minute"] = df.index.minute
+        df["dayofweek"] = df.index.dayofweek
         df["quarter_hour"] = df["hour"] * 4 + df["minute"] // 15
         df["is_weekend"] = df["dayofweek"].isin([5, 6]).astype(int)
 
@@ -77,6 +78,7 @@ class DatasetBelgium1D:
 
         df = pd.read_csv(battery_file, parse_dates=["datetime"])
         df = df[(df["datetime"] >= start_dt) & (df["datetime"] < end_dt)]
+        df = df.sort_values("datetime").set_index("datetime")
 
         df["y"] = df["Battery_0 (kW)"]
         z_scores = np.abs(stats.zscore(df["y"], nan_policy="omit"))
@@ -85,9 +87,9 @@ class DatasetBelgium1D:
         df["y"] = df["y"].interpolate(method="linear", limit_direction="both")
         df["y"] = min_max_normalize(df[["y"]])
 
-        df["hour"] = df["datetime"].dt.hour
-        df["minute"] = df["datetime"].dt.minute
-        df["dayofweek"] = df["datetime"].dt.dayofweek
+        df["hour"] = df.index.hour
+        df["minute"] = df.index.minute
+        df["dayofweek"] = df.index.dayofweek
         df["quarter_hour"] = df["hour"] * 4 + df["minute"] // 15
         df["is_weekend"] = df["dayofweek"].isin([5, 6]).astype(int)
 
@@ -122,12 +124,13 @@ class DatasetGermany1D:
         df["datetime"] = pd.to_datetime(df["datetime"])
 
         df = df[(df["datetime"] >= start_dt) & (df["datetime"] < end_dt)]
+        df = df.sort_values("datetime").set_index("datetime")
 
         df["y"] = min_max_normalize(df[["Consumer_0_electric (kW)"]])
 
-        df["hour"] = df["datetime"].dt.hour
-        df["minute"] = df["datetime"].dt.minute
-        df["dayofweek"] = df["datetime"].dt.dayofweek
+        df["hour"] = df.index.hour
+        df["minute"] = df.index.minute
+        df["dayofweek"] = df.index.dayofweek
         df["quarter_hour"] = df["hour"] * 4 + df["minute"] // 15
         df["is_weekend"] = df["dayofweek"].isin([5, 6]).astype(int)
 
@@ -156,12 +159,13 @@ class DatasetLondon1D:
         london_consumption_file = "data/london_dataset/LCL_london_consumption_2013.csv"
         df = pd.read_csv(london_consumption_file)
         df["datetime"] = pd.to_datetime(df["DateTime"])
+        df = df.sort_values("datetime").set_index("datetime")
 
         df["y"] = min_max_normalize(df[["KWH/hh (per half hour)"]])
 
-        df["hour"] = df["datetime"].dt.hour
-        df["minute"] = df["datetime"].dt.minute
-        df["dayofweek"] = df["datetime"].dt.dayofweek
+        df["hour"] = df.index.hour
+        df["minute"] = df.index.minute
+        df["dayofweek"] = df.index.dayofweek
         df["quarter_hour"] = df["hour"] * 4 + df["minute"] // 15
         df["is_weekend"] = df["dayofweek"].isin([5, 6]).astype(int)
 
@@ -177,6 +181,7 @@ class DatasetZonnedaelNF:
         df = pd.read_csv(zonnedael_consumption_file)
 
         df["datetime"] = pd.to_datetime(df["datetime"], format="%d-%m-%Y %H:%M", errors="coerce")
+        df = df.dropna(subset=["datetime"])
 
         client_no = f"Klant {customer_number}"
         df = df.rename(columns={"datetime": "ds", client_no: "y"})
@@ -190,15 +195,21 @@ class DatasetZonnedael1D:
     def get_inputs_for_zonnedael_consumption(self, customer_number: int):
         zonnedael_consumption_file = "data/zonnedael_dataset/liander_zonnedael_2013_original.csv"
         df = pd.read_csv(zonnedael_consumption_file)
-        df["datetime"] = pd.to_datetime(df["datetime"])
+        df["datetime"] = pd.to_datetime(
+            df["datetime"],
+            format="%d-%m-%Y %H:%M",
+            errors="coerce",
+        )
+        df = df.dropna(subset=["datetime"])
+        df = df.sort_values("datetime").set_index("datetime")
 
         customer_column = f"Klant {customer_number}"
 
         df["y"] = min_max_normalize(df[[customer_column]])
 
-        df["hour"] = df["datetime"].dt.hour
-        df["minute"] = df["datetime"].dt.minute
-        df["dayofweek"] = df["datetime"].dt.dayofweek
+        df["hour"] = df.index.hour
+        df["minute"] = df.index.minute
+        df["dayofweek"] = df.index.dayofweek
         df["quarter_hour"] = df["hour"] * 4 + df["minute"] // 15
         df["is_weekend"] = df["dayofweek"].isin([5, 6]).astype(int)
 
