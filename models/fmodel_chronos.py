@@ -63,7 +63,7 @@ def chronos_forecast_model(y_df, model_name, save_dir, forecast_horizon):
 
     # Predict quantiles and mean forecast
     quantile_levels = [0.1, 0.5, 0.9]  # 90% confidence interval
-    quantiles, mean = pipeline.predict_quantiles(
+    quantiles, _ = pipeline.predict_quantiles(
         context=context_values,
         prediction_length=forecast_horizon,
         quantile_levels=quantile_levels,
