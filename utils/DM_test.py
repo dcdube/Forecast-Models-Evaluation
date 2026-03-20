@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-f_size = 12
+f_size = 9
 
 # Dataset Selection Toggle
 selected_dataset = "germany"  # Options: "belgium" or "germany" or "london" or "zonnedael"
@@ -152,10 +152,13 @@ def _read_single_load_file(load_csv: Path) -> Optional[pd.DataFrame]:
     return parsed.sort_values("datetime")
 
 
-def read_target_mae_losses(model_dir: Path, target_filename: str) -> Tuple[Optional[pd.Series], Optional[Path]]:
+def read_target_losses(
+    model_dir: Path,
+    target_filename: str,
+) -> Tuple[Optional[pd.Series], Optional[pd.Series], Optional[Path]]:
     target_files = _collect_target_files(model_dir, target_filename)
     if not target_files:
-        return None, None
+        return None, None, None
 
     run_frames: List[pd.DataFrame] = []
     for target_file in target_files:
@@ -164,7 +167,7 @@ def read_target_mae_losses(model_dir: Path, target_filename: str) -> Tuple[Optio
             run_frames.append(parsed)
 
     if not run_frames:
-        return None, target_files[0]
+        return None, None, target_files[0]
 
     if len(run_frames) == 1:
         merged = run_frames[0].copy()
@@ -178,7 +181,7 @@ def read_target_mae_losses(model_dir: Path, target_filename: str) -> Tuple[Optio
 
         merged_runs = pd.concat(aligned_runs, axis=1, join="inner").dropna()
         if merged_runs.empty:
-            return None, target_files[0]
+            return None, None, target_files[0]
 
         actual_cols = [col for col in merged_runs.columns if col.startswith("actual_")]
         forecast_cols = [col for col in merged_runs.columns if col.startswith("forecast_")]
@@ -194,7 +197,8 @@ def read_target_mae_losses(model_dir: Path, target_filename: str) -> Tuple[Optio
     index = pd.DatetimeIndex(merged["datetime"])
 
     mae_losses = pd.Series(np.abs(err), index=index).sort_index()
-    return mae_losses, target_files[0]
+    rmse_losses = pd.Series(err**2, index=index).sort_index()
+    return mae_losses, rmse_losses, target_files[0]
 
 
 def build_dm_matrix(losses: Dict[str, Optional[pd.Series]], model_names: Iterable[str]) -> np.ndarray:
@@ -217,39 +221,56 @@ def build_dm_matrix(losses: Dict[str, Optional[pd.Series]], model_names: Iterabl
 
     return matrix
 
-def plot_dm_heatmap(
+def plot_dm_heatmaps(
     model_names: List[str],
-    dm_matrix: np.ndarray,
+    dm_matrix_mae: np.ndarray,
+    dm_matrix_rmse: np.ndarray,
     output_pdf: Path,
 ) -> None:
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
 
-    fig = plt.figure(figsize=(10, 8), constrained_layout=True)
-    grid = fig.add_gridspec(1, 2, width_ratios=[1.0, 0.04])
-    ax = fig.add_subplot(grid[0, 0])
-    cax = fig.add_subplot(grid[0, 1])
+    fig = plt.figure(figsize=(8, 4), constrained_layout=False)
+    grid = fig.add_gridspec(1, 3, width_ratios=[1.0, 1.0, 0.04], wspace=0.08)
+    ax_mae = fig.add_subplot(grid[0, 0])
+    ax_rmse = fig.add_subplot(grid[0, 1])
+    cax = fig.add_subplot(grid[0, 2])
 
     cmap = plt.get_cmap("viridis").copy()
     cmap.set_over("yellow")
     cmap.set_bad("white")
-    im = ax.imshow(dm_matrix, cmap=cmap, vmin=0.0, vmax=0.1, aspect="auto")
+    im = ax_mae.imshow(dm_matrix_mae, cmap=cmap, vmin=0.0, vmax=0.1, aspect="auto")
+    ax_rmse.imshow(dm_matrix_rmse, cmap=cmap, vmin=0.0, vmax=0.1, aspect="auto")
 
     ticks = np.arange(len(model_names))
     display_names = [legend_name_map.get(name, name) for name in model_names]
-    ax.set_xticks(ticks)
-    ax.set_yticks(ticks)
-    ax.set_xticklabels(display_names, rotation=45, ha="right", fontsize=f_size)
-    ax.set_yticklabels(display_names, fontsize=f_size)
+    ax_mae.set_title("DM test (MAE loss)", fontsize=f_size)
+    ax_mae.set_xticks(ticks)
+    ax_mae.set_yticks(ticks)
+    ax_mae.set_xticklabels(display_names, rotation=90, ha="right", fontsize=f_size)
+    ax_mae.set_yticklabels(display_names, fontsize=f_size)
+    ax_mae.text(-0.04, 1.035, "(a)", transform=ax_mae.transAxes, ha="left", va="top", fontsize=f_size)
+
+    ax_rmse.set_title("DM test (RMSE loss)", fontsize=f_size)
+    ax_rmse.set_xticks(ticks)
+    ax_rmse.set_yticks(ticks)
+    ax_rmse.set_xticklabels(display_names, rotation=90, ha="right", fontsize=f_size)
+    ax_rmse.set_yticklabels([])
+    ax_rmse.tick_params(axis="y", left=False)
+    ax_rmse.text(-0.04, 1.035, "(b)", transform=ax_rmse.transAxes, ha="left", va="top", fontsize=f_size)
 
     cbar = fig.colorbar(im, cax=cax, extend="max")
     cbar.set_label("p-value", rotation=90, labelpad=0, fontsize=f_size)
     cbar.ax.tick_params(labelsize=f_size)
-    fig.savefig(output_pdf, format="pdf", dpi=300)
+
+    # Eliminate outer white margins in the saved figure.
+    fig.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0, wspace=0.12)
+    fig.savefig(output_pdf, format="pdf", dpi=300, bbox_inches="tight", pad_inches=0)
     plt.close(fig)
 
 
-def run_dm_for_dataset(project_root: Path, dataset_name: str) -> List[Path]:
-    dataset_dir = project_root / "results" / f"results_{dataset_name}"
+def run_dm_for_dataset(dataset_name: str) -> List[Path]:
+    base_dir = Path(".")
+    dataset_dir = base_dir / "results" / f"results_{dataset_name}"
     if not dataset_dir.exists() or not dataset_dir.is_dir():
         raise FileNotFoundError(f"Dataset results folder not found: {dataset_dir}")
 
@@ -268,14 +289,16 @@ def run_dm_for_dataset(project_root: Path, dataset_name: str) -> List[Path]:
     model_names = [model_dir.name for model_dir in model_dirs]
 
     for target_filename in target_filenames:
-        losses: Dict[str, Optional[pd.Series]] = {}
+        mae_losses: Dict[str, Optional[pd.Series]] = {}
+        rmse_losses: Dict[str, Optional[pd.Series]] = {}
         missing_loss_files: List[str] = []
 
         for model_dir in model_dirs:
             model_name = model_dir.name
-            mae_series, _ = read_target_mae_losses(model_dir, target_filename)
-            losses[model_name] = mae_series
-            if mae_series is None:
+            mae_series, rmse_series, _ = read_target_losses(model_dir, target_filename)
+            mae_losses[model_name] = mae_series
+            rmse_losses[model_name] = rmse_series
+            if mae_series is None or rmse_series is None:
                 missing_loss_files.append(model_name)
 
         if missing_loss_files:
@@ -284,11 +307,12 @@ def run_dm_for_dataset(project_root: Path, dataset_name: str) -> List[Path]:
                 + ", ".join(sorted(missing_loss_files))
             )
 
-        dm_matrix = build_dm_matrix(losses, model_names)
+        dm_matrix_mae = build_dm_matrix(mae_losses, model_names)
+        dm_matrix_rmse = build_dm_matrix(rmse_losses, model_names)
 
-        target_name = target_filename.replace("_forecast_vs_actual.csv", "")
-        output_pdf = project_root / "results" / "DM_test" / dataset_name / f"DM_test_{target_name}.pdf"
-        plot_dm_heatmap(model_names, dm_matrix, output_pdf)
+        target_name = target_filename.replace("_forecast_vs_actual.csv", "").lower()
+        output_pdf = base_dir / "results" / "dm_test" / dataset_name / f"dm_test_{target_name}.pdf"
+        plot_dm_heatmaps(model_names, dm_matrix_mae, dm_matrix_rmse, output_pdf)
         output_pdfs.append(output_pdf)
 
     return output_pdfs
@@ -307,10 +331,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    project_root = Path(__file__).resolve().parent
-
     for dataset_name in args.datasets:
-        output_pdfs = run_dm_for_dataset(project_root, dataset_name)
+        output_pdfs = run_dm_for_dataset(dataset_name)
         for output_pdf in output_pdfs:
             print(f"Saved DM test heatmap to: {output_pdf}")
 

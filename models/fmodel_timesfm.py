@@ -1,7 +1,14 @@
 import pandas as pd  
 import os
+import sys
 import warnings
 import logging
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from utils.metrics import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from utils.dataset_config import (
     DatasetBelgiumNF,
@@ -42,7 +49,7 @@ def setup_model_logger(save_dir):
     logging.info(f"Logger initialized at {log_file}")
 
 # Core function for TimesFM
-def timesfm_forecast_model(y_df, model_name, save_dir, forecast_horizon, tfm, sampling_rate):
+def timesfm_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon, tfm, sampling_rate):
     y_df = y_df.iloc[::int(100 / sampling_rate)]
     train_df = y_df.iloc[:-forecast_horizon]
     test_df = y_df.iloc[-forecast_horizon:]

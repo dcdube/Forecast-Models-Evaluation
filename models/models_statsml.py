@@ -1,12 +1,19 @@
 import pandas as pd  
 import os
+import sys
 import time
 import logging
 import warnings
 import gc
+from pathlib import Path
 from sklearn.neighbors import KNeighborsRegressor
 import lightgbm as lgb
 import pmdarima as pm
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from utils.metrics import split_train_test, calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from utils.dataset_config import (
     DatasetBelgium1D, 
@@ -16,7 +23,7 @@ from utils.dataset_config import (
 )
 
 # ============================ Dataset Selection Toggle ===================================
-selected_dataset = "belgium"  # Options: "belgium" or "germany" or "london" or "zonnedael"
+selected_dataset = "london"  # Options: "belgium" or "germany" or "london" or "zonnedael"
 
 dataset_belgium = DatasetBelgium1D()
 dataset_germany = DatasetGermany1D()
@@ -63,13 +70,13 @@ def generic_model(X, y, model_name, save_dir, model_type, run_num, sampling_rate
 
         logging.info(f"Training {model_type} model for {model_name} on {len(y_train)} samples (univariate)...")
 
-        d_order = pm.arima.ndiffs(y_train, alpha=0.05, test='kpss', max_d=2)
-
-        # If you MUST use seasonality, pre-calculate D as well.
-        # Note: With m=48, this can still be slow.
-        D_order = pm.arima.nsdiffs(y_train, m=48, max_D=1, test='ch')
-
         if model_type == "ARIMA":
+            d_order = pm.arima.ndiffs(y_train, alpha=0.05, test='kpss', max_d=2)
+
+            # If you MUST use seasonality, pre-calculate D as well.
+            # Note: With m=48, this can still be slow.
+            D_order = pm.arima.nsdiffs(y_train, m=48, max_D=1, test='ch')
+
             model = pm.auto_arima(
                 y_train,
                 start_p=0, start_q=0,
@@ -250,10 +257,10 @@ def paper_forecasting_train(run_num, model_type, sampling_rate):
 # Main script
 if __name__ == "__main__":
     model_types = [
-        "KNNRegression",
-        "LightGBM",
-        "ARIMA",
-        "NaiveMovingAverage",
+        # "KNNRegression",
+        # "LightGBM",
+        # "ARIMA",
+        "NaiveMovingAverage"
     ]
 
     for sampling_rate in [25, 100/3, 50, 100]:

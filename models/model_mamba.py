@@ -1,13 +1,20 @@
 import os
+import sys
 import warnings
 import logging
 import time
 import gc
 import pandas as pd
+from pathlib import Path
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from mamba_ssm import Mamba
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from utils.metrics import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from utils.dataset_config import (
     DatasetBelgiumNF,

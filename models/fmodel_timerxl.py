@@ -1,7 +1,14 @@
 import pandas as pd 
 import os
+import sys
 import warnings
 import logging
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from utils.metrics import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from utils.dataset_config import (
     DatasetBelgiumNF,
@@ -16,7 +23,7 @@ from transformers import AutoModelForCausalLM
 warnings.filterwarnings("ignore", category=FutureWarning, module="huggingface_hub.file_download")
 
 # ============================ Dataset Selection Toggle ===================================
-selected_dataset = "london"  # Options: "belgium" or "germany" or "london" or "zonnedael"
+selected_dataset = "belgium"  # Options: "belgium" or "germany" or "london" or "zonnedael"
 
 dataset_belgium = DatasetBelgiumNF()
 dataset_germany = DatasetGermanyNF()
@@ -55,9 +62,14 @@ def hf_causal_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon,
     context_tensor = torch.tensor(context_values).unsqueeze(0).to(device)
 
     model = AutoModelForCausalLM.from_pretrained(hf_model_name, trust_remote_code=True).to(device)
+    model.generation_config.use_cache = False
 
     with torch.no_grad():
-        output = model.generate(context_tensor, max_new_tokens=forecast_horizon)
+        output = model.generate(
+            context_tensor,
+            max_new_tokens=forecast_horizon,
+            use_cache=False,
+        )
 
     y_pred = output[0, -forecast_horizon:].detach().cpu().numpy()
     y_true = test_df["y"].values

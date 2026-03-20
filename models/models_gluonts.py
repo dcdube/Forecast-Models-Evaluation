@@ -1,13 +1,20 @@
 import pandas as pd
 import os
+import sys
 import warnings
 import logging
 import time
 import gc  
+from pathlib import Path
 from gluonts.dataset.common import ListDataset
 from gluonts.mx.trainer import Trainer
 from gluonts.evaluation.backtest import make_evaluation_predictions
 import mxnet as mx
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from utils.metrics import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from utils.dataset_config import (
     DatasetBelgiumNF,
@@ -133,27 +140,27 @@ def train_all_models(start_dt, end_dt, save_dir, model_name, model_class, sampli
         logging.info("Training PV models")
         for house in [1, 2, 3, 4]:
             pv_data = dataset_belgium.get_inputs_for_pv(house, start_dt, end_dt)
-            _, pv_mae, pv_rmse = train_pv_model(pv_data, save_dir, house, model_name, model_class, sampling_rate, forecast_horizon, freq)
+            _, pv_mae, pv_rmse = train_pv_model(pv_data, save_dir, house, model_class, sampling_rate, forecast_horizon, freq)
             metrics.append({"model": f"pv_house_{house}", "MAE": pv_mae, "RMSE": pv_rmse})
 
         logging.info("Training BESS models")
         for house in [1, 2, 3, 4]:
             battery_data = dataset_belgium.get_inputs_for_battery(house, start_dt, end_dt)
-            _, b_mae, b_rmse = train_battery_model(battery_data, save_dir, house, model_name, model_class, sampling_rate, forecast_horizon, freq)
+            _, b_mae, b_rmse = train_battery_model(battery_data, save_dir, house, model_class, sampling_rate, forecast_horizon, freq)
             metrics.append({"model": f"bess_house_{house}", "MAE": b_mae, "RMSE": b_rmse})
 
     elif selected_dataset == "germany":
 
         logging.info("Training Germany load model")
         germany_data = dataset_germany.get_inputs_for_load(start_dt, end_dt)
-        _, load_mae, load_rmse = train_germany_model(germany_data, save_dir, model_name, model_class, sampling_rate, forecast_horizon, freq)
+        _, load_mae, load_rmse = train_germany_model(germany_data, save_dir, model_class, sampling_rate, forecast_horizon, freq)
         metrics.append({"model": "germany_load", "MAE": load_mae, "RMSE": load_rmse})
 
     elif selected_dataset == "london":
 
         logging.info("Training London load model")
         london_data = dataset_london.get_inputs_for_load()
-        _, load_mae, load_rmse = train_london_model(london_data, save_dir, model_name, model_class, sampling_rate, forecast_horizon, freq)
+        _, load_mae, load_rmse = train_london_model(london_data, save_dir, model_class, sampling_rate, forecast_horizon, freq)
         metrics.append({"model": "london_load", "MAE": load_mae, "RMSE": load_rmse})
 
     elif selected_dataset == "zonnedael":
@@ -161,7 +168,7 @@ def train_all_models(start_dt, end_dt, save_dir, model_name, model_class, sampli
         logging.info("Training Zonnedael customer models")
         for customer_id in [8, 9, 43]:
             cust_data = dataset_zonnedael.get_inputs_for_zonnedael_consumption(customer_id)
-            _, c_mae, c_rmse = train_zonnedael_model(customer_id, cust_data, save_dir, model_name, model_class, sampling_rate, forecast_horizon, freq)
+            _, c_mae, c_rmse = train_zonnedael_model(customer_id, cust_data, save_dir, model_class, sampling_rate, forecast_horizon, freq)
             metrics.append({"model": f"zonnedael_customer_{customer_id}", "MAE": c_mae, "RMSE": c_rmse})
 
     pd.DataFrame(metrics).to_csv(os.path.join(save_dir, "model_metrics_summary.csv"), index=False)
