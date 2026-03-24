@@ -75,7 +75,7 @@ Each model lists its primary library and a GitHub repository. Scripts are linked
 | NLinear | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
 | TiDE | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
 
-### 3. Recurrent Neural Networks
+### 3. Recurrent Networks
 
 | Model | Library | Repository | Script |
 |------|---------|------------|--------|
@@ -85,7 +85,7 @@ Each model lists its primary library and a GitHub repository. Scripts are linked
 | Mamba | mamba-ssm | https://github.com/state-spaces/mamba | [models/model_mamba.py](models/model_mamba.py) |
 | Temporal Fusion Transformer (TFT) | GluonTS | https://github.com/awslabs/gluonts | [models/models_gluonts.py](models/models_gluonts.py) |
 
-### 4. Convolutional Neural Networks
+### 4. Convolutional Networks
 
 | Model | Library | Repository | Script |
 |------|---------|------------|--------|
