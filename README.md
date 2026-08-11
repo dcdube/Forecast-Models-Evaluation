@@ -19,26 +19,24 @@ The benchmarking pipeline applies a standardized preprocessing workflow includin
 
 ### Create environment and install dependencies
 
-To reproduce the results, there is need to create several python environments for different model libraries to avoid confliciting packages. The links to the repositories of all the models evaluated in this work are presented in the **Forecasting Models** section.
+Separate python environments are provided for the model libraries to avoid dependency conflicts. Each model script has a corresponding environment file in the [`requirements`](requirements) directory.
 
-Every model script provides CLI help and keeps its previous benchmark settings as defaults:
+For example, create and activate the *Chronos* environment with:
+
+```bash
+conda env create --file requirements/env_chronos.yml
+conda activate chronos
+```
+
+To create another model environment, replace `env_chronos.yml` with its corresponding `env_<model>.yml` file. The environment name is defined by the `name` field in each file. Every model keeps its settings as defaults and provides command line interface (CLI) help for example:
 
 ```bash
 python models/model_naivedrift.py --help
-python models/model_naivedrift.py --dataset london --sampling_rate 100 --runs 1
-python models/models_neuralforecast.py --dataset germany --models NBEATS NHITS --epochs 100 --runs 1
-```
-
-The common options are `--dataset`, `--sampling_rate` (one or more percentages), `--runs`, and `--results_dir`. Multi-model scripts also provide `--models`; trainable models provide `--epochs` where applicable. Foundation-model scripts expose their checkpoint, device, batch_size, and service settings through their own CLI options. Data and result defaults are resolved from the repository root, independent of the launch directory.
-
-The executable analysis utilities also provide CLI help:
-
-```bash
-python utils/plots.py --directory results/results_belgium/AutoARIMA/Sampling_100/Run_1
-python utils/dm_test.py --datasets belgium germany --font_size 9
 ```
 
 Use `python <script> --help` for all available options.
+
+The common options are `--dataset`, `--sampling_rate`, `--runs`, `--gpu`, and `--results_dir`. Use `--gpu 0` for GPU 0, `--gpu 1` for GPU 1, or any other value (the default is `-1`) for CPU. Multi-model scripts also provide `--models`; trainable models provide `--epochs` where applicable. Foundation-model scripts expose their checkpoint, batch size, and service settings through their own CLI options.
 
 ## Datasets
 
@@ -65,14 +63,18 @@ Each model lists its primary library and a GitHub repository. Scripts are linked
 | Naive Drift | custom (numpy, pandas) | https://github.com/numpy/numpy | [models/model_naivedrift.py](models/model_naivedrift.py) |
 | Naive Moving Average | custom (numpy, pandas) | https://github.com/pandas-dev/pandas | [models/models_statsml.py](models/models_statsml.py) |
 
-Complete CLI examples:
+Examples:
+
+*AutoARIMA, KNN Regression, LightGBM, and Naive Moving Average*
 
 ```bash
-# AutoARIMA, KNN Regression, LightGBM, and Naive Moving Average
-python models/models_statsml.py --dataset london --sampling_rates 25 100/3 50 100 --models KNNRegression LightGBM ARIMA NaiveMovingAverage --runs 1 --results_dir results
+python models/models_statsml.py --dataset london --sampling_rates 100 --models KNNRegression LightGBM ARIMA NaiveMovingAverage --runs 1 --results_dir results
+```
 
-# Naive Drift
-python models/model_naivedrift.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 1 --results_dir results
+*Naive Drift*
+
+```bash
+python models/model_naivedrift.py --dataset belgium --sampling_rates 100 --runs 1 --results_dir results
 ```
 
 ### 2. MLP-based Models
@@ -85,10 +87,12 @@ python models/model_naivedrift.py --dataset belgium --sampling_rates 25 100/3 50
 | NLinear | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
 | TiDE | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
 
-Complete CLI example:
+Example:
+
+*DeepNPTS, N-BEATS, NHITS, NLinear, and TiDE*
 
 ```bash
-python models/models_neuralforecast.py --dataset belgium --sampling_rates 25 100/3 50 100 --models DeepNPTS NBEATS NHITS NLinear TiDE --runs 10 --epochs 100 --results_dir results
+python models/models_neuralforecast.py --gpu 0 --dataset belgium --sampling_rates 100 --models DeepNPTS NBEATS NHITS NLinear TiDE --runs 10 --epochs 100 --results_dir results
 ```
 
 ### 3. Recurrent Networks
@@ -101,14 +105,18 @@ python models/models_neuralforecast.py --dataset belgium --sampling_rates 25 100
 | Mamba | mamba-ssm | https://github.com/state-spaces/mamba | [models/model_mamba.py](models/model_mamba.py) |
 | Temporal Fusion Transformer (TFT) | GluonTS | https://github.com/awslabs/gluonts | [models/models_gluonts.py](models/models_gluonts.py) |
 
-Complete CLI examples:
+Examples:
+
+*DeepAR, DeepFactor, MQ-RNN, and Temporal Fusion Transformer*
 
 ```bash
-# DeepAR, DeepFactor, MQ-RNN, and Temporal Fusion Transformer
-python models/models_gluonts.py --dataset belgium --sampling_rates 25 100/3 50 100 --models DeepAR DeepFactor MQRNN TemporalFusionTransformer --runs 10 --epochs 100 --results_dir results
+python models/models_gluonts.py --gpu 0 --dataset belgium --sampling_rates 100 --models DeepAR DeepFactor MQRNN TemporalFusionTransformer --runs 10 --epochs 100 --results_dir results
+```
 
-# Mamba
-python models/model_mamba.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 10 --epochs 100 --results_dir results
+*Mamba*
+
+```bash
+python models/model_mamba.py --gpu 0 --dataset belgium --sampling_rates 100 --runs 10 --epochs 100 --results_dir results
 ```
 
 ### 4. Convolutional Networks
@@ -121,14 +129,18 @@ python models/model_mamba.py --dataset belgium --sampling_rates 25 100/3 50 100 
 | WaveNet | GluonTS | https://github.com/awslabs/gluonts | [models/models_gluonts.py](models/models_gluonts.py) |
 | MQ-CNN | GluonTS | https://github.com/awslabs/gluonts | [models/models_gluonts.py](models/models_gluonts.py) |
 
-Complete CLI examples:
+Examples:
+
+*TCN, BiTCN, and TimesNet*
 
 ```bash
-# TCN, BiTCN, and TimesNet
-python models/models_neuralforecast.py --dataset belgium --sampling_rates 25 100/3 50 100 --models TCN BiTCN TimesNet --runs 10 --epochs 100 --results_dir results
+python models/models_neuralforecast.py --gpu 0 --dataset belgium --sampling_rates 100 --models TCN BiTCN TimesNet --runs 10 --epochs 100 --results_dir results
+```
 
-# WaveNet and MQ-CNN
-python models/models_gluonts.py --dataset belgium --sampling_rates 25 100/3 50 100 --models WaveNet MQCNN --runs 10 --epochs 100 --results_dir results
+*WaveNet and MQ-CNN*
+
+```bash
+python models/models_gluonts.py --gpu 0 --dataset belgium --sampling_rates 100 --models WaveNet MQCNN --runs 10 --epochs 100 --results_dir results
 ```
 
 ### 5. Transformer-based Models
@@ -141,10 +153,12 @@ python models/models_gluonts.py --dataset belgium --sampling_rates 25 100/3 50 1
 | Vanilla Transformer | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
 | TimeXer | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
 
-Complete CLI example:
+Example:
+
+*Informer, PatchTST, iTransformer, Vanilla Transformer, and TimeXer*
 
 ```bash
-python models/models_neuralforecast.py --dataset belgium --sampling_rates 25 100/3 50 100 --models Informer PatchTST iTransformer VanillaTransformer TimeXer --runs 10 --epochs 100 --results_dir results
+python models/models_neuralforecast.py --gpu 0 --dataset belgium --sampling_rates 100 --models Informer PatchTST iTransformer VanillaTransformer TimeXer --runs 10 --epochs 100 --results_dir results
 ```
 
 ### 6. Time Series Foundation Models
@@ -155,34 +169,46 @@ python models/models_neuralforecast.py --dataset belgium --sampling_rates 25 100
 | TimesFM | timesfm | https://github.com/google-research/timesfm | [models/fmodel_timesfm.py](models/fmodel_timesfm.py) |
 | MOIRAI | uni2ts | https://github.com/SalesforceAIResearch/uni2ts | [models/fmodel_moirai.py](models/fmodel_moirai.py) |
 | Chronos | chronos-forecasting | https://github.com/amazon-science/chronos-forecasting | [models/fmodel_chronos.py](models/fmodel_chronos.py) |
-| Timer-XL | transformers | https://github.com/huggingface/transformers | [models/fmodel_timerxl.py](models/fmodel_timerxl.py) |
+| Timer-XL | transformers | https://github.com/thuml/Timer-XL | [models/fmodel_timerxl.py](models/fmodel_timerxl.py) |
 
-Complete CLI examples:
+Examples:
+
+*TimeGPT*
 
 ```bash
-# TimeGPT
-python models/fmodel_timegpt.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 1 --api_key nixak-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX --model timegpt-1-long-horizon --confidence_level 95 --finetune_steps 0 --finetune_depth 1 --results_dir results
+python models/fmodel_timegpt.py --dataset belgium --sampling_rates 100 --runs 1 --api_key nixak-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX --model timegpt-1-long-horizon --confidence_level 95 --finetune_steps 0 --finetune_depth 1 --results_dir results
+```
 
-# TimesFM
-python models/fmodel_timesfm.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 1 --backend gpu --batch_size 32 --model_id google/timesfm-1.0-200m-pytorch --results_dir results
+*TimesFM*
 
-# MOIRAI
-python models/fmodel_moirai.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 1 --model moirai --size small --patch_size auto --batch_size 32 --results_dir results
+```bash
+python models/fmodel_timesfm.py --gpu 0 --dataset belgium --sampling_rates 100 --runs 1 --batch_size 32 --model_id google/timesfm-1.0-200m-pytorch --results_dir results
+```
 
-# Chronos
-python models/fmodel_chronos.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 1 --model_id amazon/chronos-bolt-small --device auto --results_dir results
+*MOIRAI*
 
-# Timer-XL
-python models/fmodel_timerxl.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 1 --model_id thuml/timer-base-84m --save_folder TimerXL --device auto --results_dir results
+```bash
+python models/fmodel_moirai.py --gpu 0 --dataset belgium --sampling_rates 100 --runs 1 --model moirai --size small --patch_size auto --batch_size 32 --results_dir results
+```
+
+*Chronos*
+
+```bash
+python models/fmodel_chronos.py --gpu 0 --dataset belgium --sampling_rates 100 --runs 1 --model_id amazon/chronos-bolt-small --results_dir results
+```
+
+*Timer-XL*
+
+```bash
+python models/fmodel_timerxl.py --gpu 0 --dataset belgium --sampling_rates 100 --runs 1 --model_id thuml/timer-base-84m --save_folder TimerXL --results_dir results
 ```
 
 ## Notes
 
 - Some models can run on the CPU while others require GPU for practical runtimes.
 - TimeGPT requires a valid API key supplied with `--api_key`.
-- Timer-XL uses Hugging Face model IDs. Use `--model_id` and `--save_folder` to switch models.
-- Chronos, TimesFM, and MOIRAI may download weights on first run.
+- Chronos, TimesFM, MOIRAI, and Timer-XL download weights on first run.
 
 ## Results
 
-All model outputs are saved in the `results` folder with per-run plots and metrics summaries. Generated CSV floating-point values use at most six decimal places. The plotting and metrics utilities are in [utils/metrics.py](utils/metrics.py) and [utils/plots.py](utils/plots.py). Please refer to our paper for the results.
+All model outputs are saved in the `results_dir` folder with per-run plots and metrics summaries. The plotting and metrics utilities are in [utils/metrics.py](utils/metrics.py) and [utils/plots.py](utils/plots.py). Please refer to our paper for the results and references to all the models evaluated.

@@ -10,6 +10,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 from utils.metrics import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from utils.dataset_config import DatasetBelgiumNF, DatasetGermanyNF, DatasetLondonNF, DatasetZonnedaelNF
+from utils.device import GPU_HELP, execution_target
 import time
 import gc
 from nixtla import NixtlaClient
@@ -157,9 +158,11 @@ if __name__ == "__main__":
     parser.add_argument("--confidence_level", type=int, default=95, help="Prediction interval confidence level.")
     parser.add_argument("--finetune_steps", type=int, default=0, help="Fine-tuning steps.")
     parser.add_argument("--finetune_depth", type=int, default=1, help="Fine-tuning depth (finetune_steps > 0).")
-    # =========================================================================================
+    parser.add_argument("--gpu", type=int, default=-1, help=GPU_HELP)
     parser.add_argument("--results_dir", type=Path, default=PROJECT_ROOT / "results", help="Root directory for generated results.")
     args = parser.parse_args()
+    if execution_target(args.gpu) != "CPU":
+        logging.info("TimeGPT inference runs on the remote service; local preprocessing will use CPU.")
     dataset = dataset_classes[args.dataset]()
     client = NixtlaClient(api_key=args.api_key)
     # Run all sampling rates and seeds

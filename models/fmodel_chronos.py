@@ -10,6 +10,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 from utils.metrics import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from utils.dataset_config import DatasetBelgiumNF, DatasetGermanyNF, DatasetLondonNF, DatasetZonnedaelNF
+from utils.device import GPU_HELP, torch_device
 import time
 import gc
 import torch
@@ -40,7 +41,7 @@ def chronos_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon, s
     # Predict quantiles and mean forecast
     quantile_levels = [0.1, 0.5, 0.9]  # 90% confidence interval
     quantiles, _ = pipeline.predict_quantiles(
-        context=context_values,
+        inputs=context_values,
         prediction_length=forecast_horizon,
         quantile_levels=quantile_levels
     )
@@ -103,12 +104,12 @@ def paper_forecasting_train(dataset_name, dataset, run_num, sampling_rate, pipel
     forecast_horizon = int(192 / (100 / sampling_rate))
     try:
         gc.collect()
-        if torch.cuda.is_available():
+        if device.startswith("cuda"):
             torch.cuda.empty_cache()
         save_dir = results_dir / f"results_{dataset_name}/Chronos/Sampling_{sampling_rate:.0f}/Run_{run_num}"
         train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, freq_str, forecast_horizon, sampling_rate, pipeline, device)
         gc.collect()
-        if torch.cuda.is_available():
+        if device.startswith("cuda"):
             torch.cuda.empty_cache()
     except Exception as e:
         logging.error(f"Skipping Chronos due to error: {str(e)}", exc_info=True)
@@ -123,17 +124,17 @@ if __name__ == "__main__":
     parser.add_argument("--sampling_rates", "--sampling_rate", nargs="+", type=float, default=[25, 100/3, 50, 100], help="Sampling percentages to evaluate.")
     parser.add_argument("--runs", type=int, default=1, help="Number of runs.")
     parser.add_argument("--model_id", default="amazon/chronos-bolt-small", help="Chronos checkpoint ID.")
-    parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto", help="Torch device.")
+    parser.add_argument("--gpu", type=int, default=-1, help=GPU_HELP)
     parser.add_argument("--results_dir", type=Path, default=PROJECT_ROOT / "results", help="Root directory for generated results.")
     args = parser.parse_args()
     dataset = dataset_classes[args.dataset]()
-    device = "cuda" if args.device == "auto" and torch.cuda.is_available() else "cpu" if args.device == "auto" else args.device
+    device = torch_device(args.gpu)
     # Load Chronos pipeline pretrained model
     # Change to "amazon/chronos-t5-small" if desired
     pipeline = BaseChronosPipeline.from_pretrained(
         args.model_id,
         device_map=device,
-        torch_dtype=torch.bfloat16 if device == "cuda" else torch.float32
+        torch_dtype=torch.bfloat16 if device.startswith("cuda") else torch.float32
     )
     # Run all sampling rates and seeds
     for sampling_rate in args.sampling_rates:

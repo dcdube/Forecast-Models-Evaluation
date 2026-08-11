@@ -10,9 +10,9 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 from utils.metrics import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from utils.dataset_config import DatasetBelgiumNF, DatasetGermanyNF, DatasetLondonNF, DatasetZonnedaelNF
+from utils.device import GPU_HELP, uses_gpu
 import time
 import gc
-import timesfm
 
 
 def setup_model_logger(save_dir):
@@ -50,7 +50,16 @@ def timesfm_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon, t
     return mae, rmse
 
 # Full pipeline for TimesFM with dataset toggle
-def train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, freq, forecast_horizon, sampling_rate, backend, batch_size, model_id):
+def train_all_models(
+    dataset_name, dataset, start_dt, end_dt, save_dir, freq, forecast_horizon,
+    sampling_rate, gpu, batch_size, model_id
+):
+    # TimesFM v1 selects a backend rather than a CUDA index. Limit visibility
+    # before importing it so its GPU backend maps to the requested physical GPU.
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu) if uses_gpu(gpu) else ""
+    import timesfm
+
+    backend = "gpu" if uses_gpu(gpu) else "cpu"
     setup_model_logger(save_dir)
     metrics = []
     tfm = timesfm.TimesFm(
@@ -98,7 +107,7 @@ def train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, freq, fo
     logging.info("...End TimesFM forecasting...")
     logging.info(f"Forecasting completed in {elapsed_time:.2f} seconds.")
 
-def paper_forecasting_train(dataset_name, dataset, run_num, sampling_rate_local, backend, batch_size, model_id, results_dir=PROJECT_ROOT / "results"):
+def paper_forecasting_train(dataset_name, dataset, run_num, sampling_rate_local, gpu, batch_size, model_id, results_dir=PROJECT_ROOT / "results"):
     warnings.filterwarnings("ignore", category=pd.errors.PerformanceWarning)
     start_dt = pd.Timestamp("2024-01-01 00:00:00", tz="UTC")
     end_dt = pd.Timestamp("2024-04-01 00:00:00", tz="UTC")
@@ -107,7 +116,7 @@ def paper_forecasting_train(dataset_name, dataset, run_num, sampling_rate_local,
     try:
         gc.collect()
         save_dir = results_dir / f"results_{dataset_name}/TimesFM/Sampling_{sampling_rate_local:.0f}/Run_{run_num}"
-        train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, freq_str, forecast_horizon, sampling_rate_local, backend, batch_size, model_id)
+        train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, freq_str, forecast_horizon, sampling_rate_local, gpu, batch_size, model_id)
         gc.collect()
     except Exception as e:
         logging.error(f"Skipping TimesFM due to error: {str(e)}", exc_info=True)
@@ -121,7 +130,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", choices=["belgium", "germany", "london", "zonnedael"], default="belgium", help="Dataset to forecast.")
     parser.add_argument("--sampling_rates", "--sampling_rate", nargs="+", type=float, default=[25, 100/3, 50, 100], help="Sampling percentages to evaluate.")
     parser.add_argument("--runs", type=int, default=1, help="Number of runs.")
-    parser.add_argument("--backend", choices=["cpu", "gpu"], default="gpu", help="TimesFM execution backend.")
+    parser.add_argument("--gpu", type=int, default=-1, help=GPU_HELP)
     parser.add_argument("--batch_size", type=int, default=32, help="Per-core batch size.")
     parser.add_argument("--model_id", default="google/timesfm-1.0-200m-pytorch", help="Hugging Face checkpoint ID.")
     parser.add_argument("--results_dir", type=Path, default=PROJECT_ROOT / "results", help="Root directory for generated results.")
@@ -130,4 +139,4 @@ if __name__ == "__main__":
     # Run all sampling rates and seeds
     for sampling_rate in args.sampling_rates:
         for run_num in range(1, args.runs + 1):
-            paper_forecasting_train(args.dataset, dataset, run_num, sampling_rate, args.backend, args.batch_size, args.model_id, args.results_dir)
+            paper_forecasting_train(args.dataset, dataset, run_num, sampling_rate, args.gpu, args.batch_size, args.model_id, args.results_dir)

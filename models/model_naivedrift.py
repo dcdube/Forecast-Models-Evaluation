@@ -10,6 +10,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 from utils.metrics import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from utils.dataset_config import DatasetBelgiumNF, DatasetGermanyNF, DatasetLondonNF, DatasetZonnedaelNF
+from utils.device import GPU_HELP, execution_target
 import time
 import gc
 import numpy as np
@@ -150,8 +151,11 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", choices=["belgium", "germany", "london", "zonnedael"], default="belgium", help="Dataset to forecast.")
     parser.add_argument("--sampling_rates", "--sampling_rate", nargs="+", type=float, default=[25, 100/3, 50, 100], help="Sampling percentages to evaluate.")
     parser.add_argument("--runs", type=int, default=1, help="Number of runs.")
+    parser.add_argument("--gpu", type=int, default=-1, help=GPU_HELP)
     parser.add_argument("--results_dir", type=Path, default=PROJECT_ROOT / "results", help="Root directory for generated results.")
     args = parser.parse_args()
+    if execution_target(args.gpu) != "CPU":
+        logging.info("Naive Drift has no GPU operations and will run on CPU.")
     dataset = dataset_classes[args.dataset]()
     for sampling_rate in args.sampling_rates:
         for run_num in range(1, args.runs + 1):

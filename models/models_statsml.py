@@ -15,6 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 from utils.metrics import split_train_test, calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from utils.dataset_config import DatasetBelgium1D, DatasetGermany1D, DatasetLondon1D, DatasetZonnedael1D
+from utils.device import GPU_HELP, uses_gpu
 
 
 def setup_model_logger(save_dir):
@@ -31,7 +32,7 @@ def setup_model_logger(save_dir):
     logging.info(f"Logger initialized at {log_file}")
 
 # Generalized model training function for both univariate and multivariate models
-def generic_model(X, y, model_name, save_dir, model_type, run_num, sampling_rate, forecast_horizon):
+def generic_model(X, y, model_name, save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu):
     current_seed = int(time.time() * 1000) % (2**32 - 1)  # Ensure higher variability
     is_univariate = X is None
     logging.info(f"Run {run_num} - {model_name} - {model_type}")
@@ -99,6 +100,10 @@ def generic_model(X, y, model_name, save_dir, model_type, run_num, sampling_rate
             'deterministic': False
         }
         if model_type == "LightGBM":
+            if uses_gpu(gpu):
+                params.update(device_type="gpu", gpu_device_id=gpu)
+            else:
+                params["device_type"] = "cpu"
             model = lgb.LGBMRegressor(**params).fit(X_train, y_train)
             preds = model.predict(X_test)
         elif model_type == "KNNRegression":
@@ -112,76 +117,76 @@ def generic_model(X, y, model_name, save_dir, model_type, run_num, sampling_rate
         forecast_plot_and_csv(df_plot, model_name, save_dir)
         return model, mae, rmse
 
-def train_pv_model(dataset, start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon):
+def train_pv_model(dataset, start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon, gpu):
     if model_type in ["NaiveMovingAverage", "ARIMA"]:
         y = dataset.get_pv_data(house, start_dt, end_dt)[1]
-        return generic_model(None, y, f"pv_house_{house}", save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+        return generic_model(None, y, f"pv_house_{house}", save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu)
     else:
         X, y = dataset.get_pv_data(house, start_dt, end_dt)
-        return generic_model(X, y, f"pv_house_{house}", save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+        return generic_model(X, y, f"pv_house_{house}", save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu)
 
-def train_battery_model(dataset, start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon):
+def train_battery_model(dataset, start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon, gpu):
     if model_type in ["NaiveMovingAverage", "ARIMA"]:
         y = dataset.get_battery_data(house, start_dt, end_dt)[1]
-        return generic_model(None, y, f"bess_house_{house}", save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+        return generic_model(None, y, f"bess_house_{house}", save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu)
     else:
         X, y = dataset.get_battery_data(house, start_dt, end_dt)
-        return generic_model(X, y, f"bess_house_{house}", save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+        return generic_model(X, y, f"bess_house_{house}", save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu)
 
-def train_london_consumption_model(dataset, save_dir, model_type, run_num, sampling_rate, forecast_horizon):
+def train_london_consumption_model(dataset, save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu):
     if model_type in ["NaiveMovingAverage", "ARIMA"]:
         y = dataset.get_load_data()[1]
-        return generic_model(None, y, "london_load", save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+        return generic_model(None, y, "london_load", save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu)
     else:
         X, y = dataset.get_load_data()
-        return generic_model(X, y, "london_load", save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+        return generic_model(X, y, "london_load", save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu)
 
-def train_germany_consumption_model(dataset, start_dt, end_dt, save_dir, model_type, run_num, sampling_rate, forecast_horizon):
+def train_germany_consumption_model(dataset, start_dt, end_dt, save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu):
     if model_type in ["NaiveMovingAverage", "ARIMA"]:
         y = dataset.get_load_data(start_dt, end_dt)[1]
-        return generic_model(None, y, "germany_load", save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+        return generic_model(None, y, "germany_load", save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu)
     else:
         X, y = dataset.get_load_data(start_dt, end_dt)
-        return generic_model(X, y, "germany_load", save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+        return generic_model(X, y, "germany_load", save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu)
 
-def train_zonnedael_consumption_model(dataset, save_dir, model_type, run_num, sampling_rate, forecast_horizon):
+def train_zonnedael_consumption_model(dataset, save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu):
     metrics = []
     customer_ids = [8, 9, 43]
     for customer_number in customer_ids:
         if model_type in ["NaiveMovingAverage", "ARIMA"]:
             _, y = dataset.get_inputs_for_zonnedael_consumption(customer_number)
             _, mae, rmse = generic_model(
-                None, y, f"zonnedael_customer_{customer_number}", save_dir, model_type, run_num, sampling_rate, forecast_horizon
+                None, y, f"zonnedael_customer_{customer_number}", save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu
             )
         else:
             X, y = dataset.get_inputs_for_zonnedael_consumption(customer_number)
             _, mae, rmse = generic_model(
-                X, y, f"zonnedael_customer_{customer_number}", save_dir, model_type, run_num, sampling_rate, forecast_horizon
+                X, y, f"zonnedael_customer_{customer_number}", save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu
             )
         metrics.append({"model": f"zonnedael_load_{customer_number}", "MAE": mae, "RMSE": rmse})
     return metrics
 
 # Unified training pipeline
-def train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, model_type, run_num, sampling_rate, forecast_horizon):
+def train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu):
     setup_model_logger(save_dir)
     metrics = []
     start_time = time.time()
     logging.info(f"Run {run_num}: Start training {model_type} models...")
     if dataset_name == "belgium":
         for house in [1, 2, 3, 4]:
-            _, pv_mae, pv_rmse = train_pv_model(dataset, start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon)
+            _, pv_mae, pv_rmse = train_pv_model(dataset, start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon, gpu)
             metrics.append({"model": f"pv_house_{house}", "MAE": pv_mae, "RMSE": pv_rmse})
         for house in [1, 2, 3, 4]:
-            _, battery_mae, battery_rmse = train_battery_model(dataset, start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon)
+            _, battery_mae, battery_rmse = train_battery_model(dataset, start_dt, end_dt, save_dir, house, model_type, run_num, sampling_rate, forecast_horizon, gpu)
             metrics.append({"model": f"bess_house_{house}", "MAE": battery_mae, "RMSE": battery_rmse})
     elif dataset_name == "germany":
-        _, mae, rmse = train_germany_consumption_model(dataset, start_dt, end_dt, save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+        _, mae, rmse = train_germany_consumption_model(dataset, start_dt, end_dt, save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu)
         metrics.append({"model": "germany_load", "MAE": mae, "RMSE": rmse})
     elif dataset_name == "london":
-        _, mae, rmse = train_london_consumption_model(dataset, save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+        _, mae, rmse = train_london_consumption_model(dataset, save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu)
         metrics.append({"model": "london_load", "MAE": mae, "RMSE": rmse})
     elif dataset_name == "zonnedael":
-        zonnedael_metrics = train_zonnedael_consumption_model(dataset, save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+        zonnedael_metrics = train_zonnedael_consumption_model(dataset, save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu)
         metrics.extend(zonnedael_metrics)
     pd.DataFrame(metrics).to_csv(os.path.join(save_dir, "model_metrics_summary.csv"), index=False, float_format="%.6f")
     plot_model_metrics(metrics, save_dir)
@@ -189,13 +194,13 @@ def train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, model_ty
     logging.info(f"Run {run_num}: End training {model_type} models.")
     logging.info(f"Training completed in {end_time - start_time:.2f} seconds.")
 
-def paper_forecasting_train(dataset_name, dataset, run_num, model_type, sampling_rate, results_dir=PROJECT_ROOT / "results"):
+def paper_forecasting_train(dataset_name, dataset, run_num, model_type, sampling_rate, gpu, results_dir=PROJECT_ROOT / "results"):
     warnings.filterwarnings("ignore", category=pd.errors.PerformanceWarning)
     start_dt = pd.Timestamp("2024-01-01 00:00:00", tz="UTC")
     end_dt = pd.Timestamp("2024-04-01 00:00:00", tz="UTC")
     forecast_horizon = int(192/(100/sampling_rate))
     save_dir = results_dir / f"results_{dataset_name}/{model_type}/Sampling_{sampling_rate:.0f}/Run_{run_num}"
-    train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, model_type, run_num, sampling_rate, forecast_horizon)
+    train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, model_type, run_num, sampling_rate, forecast_horizon, gpu)
 
 if __name__ == "__main__":
     dataset_classes = dict(belgium=DatasetBelgium1D, germany=DatasetGermany1D, london=DatasetLondon1D, zonnedael=DatasetZonnedael1D)
@@ -207,6 +212,7 @@ if __name__ == "__main__":
     parser.add_argument("--models", nargs="+", choices=["KNNRegression", "LightGBM", "ARIMA", "NaiveMovingAverage"],
         default=["NaiveMovingAverage"], help="Models to evaluate.")
     parser.add_argument("--runs", type=int, help="Runs per model; otherwise 1 for deterministic models and 10 for others.")
+    parser.add_argument("--gpu", type=int, default=-1, help=GPU_HELP)
     parser.add_argument("--results_dir", type=Path, default=PROJECT_ROOT / "results", help="Root directory for generated results.")
     args = parser.parse_args()
     dataset = dataset_classes[args.dataset]()
@@ -216,7 +222,7 @@ if __name__ == "__main__":
             for run_num in range(1, n_runs + 1):
                 try:
                     gc.collect()
-                    paper_forecasting_train(args.dataset, dataset, run_num, model_type, sampling_rate, args.results_dir)
+                    paper_forecasting_train(args.dataset, dataset, run_num, model_type, sampling_rate, args.gpu, args.results_dir)
                     gc.collect()
                 except Exception as e:
                     logging.error(f"{model_type} Run {run_num} (Sampling {sampling_rate}) failed: {str(e)}", exc_info=True)

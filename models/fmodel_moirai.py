@@ -10,6 +10,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 from utils.metrics import calculate_metrics, forecast_plot_and_csv, plot_model_metrics
 from utils.dataset_config import DatasetBelgiumNF, DatasetGermanyNF, DatasetLondonNF, DatasetZonnedaelNF
+from utils.device import GPU_HELP, torch_device
 import time
 import gc
 from gluonts.dataset.pandas import PandasDataset
@@ -32,7 +33,10 @@ def setup_model_logger(save_dir):
     logging.info(f"Logger initialized at {log_file}")
 
 # Core function for Moirai
-def moirai_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon, sampling_rate, architecture, size, patch_size, batch_size):
+def moirai_forecast_model(
+    y_df, model_name, save_dir, freq, forecast_horizon, sampling_rate,
+    architecture, size, patch_size, batch_size, device
+):
     y_df = y_df.iloc[::int(100 / sampling_rate)].copy() 
     y_df["ds"] = pd.to_datetime(y_df["ds"]).dt.tz_localize(None)  # Ensure datetime format and strip timezone
     y_df.set_index("ds", inplace=True)  # Set datetime index
@@ -83,7 +87,7 @@ def moirai_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon, sa
             feat_dynamic_real_dim=ds.num_feat_dynamic_real,
             past_feat_dynamic_real_dim=ds.num_past_feat_dynamic_real
         )
-    predictor = model.create_predictor(batch_size=batch_size)
+    predictor = model.create_predictor(batch_size=batch_size, device=device)
     forecasts = list(predictor.predict(test_data.input))
     forecast = forecasts[0].mean
     y_pred = forecast.tolist()
@@ -98,7 +102,10 @@ def moirai_forecast_model(y_df, model_name, save_dir, freq, forecast_horizon, sa
     return mae, rmse
 
 # Full pipeline for Moirai
-def train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, freq, forecast_horizon, sampling_rate, architecture, size, patch_size, batch_size):
+def train_all_models(
+    dataset_name, dataset, start_dt, end_dt, save_dir, freq, forecast_horizon,
+    sampling_rate, architecture, size, patch_size, batch_size, device
+):
     setup_model_logger(save_dir)
     metrics = []
     start_time = time.time()
@@ -108,27 +115,27 @@ def train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, freq, fo
         for house in [1, 2, 3, 4]:
             pv_data = dataset.get_inputs_for_pv(house, start_dt, end_dt)
             pv_mae, pv_rmse = moirai_forecast_model(
-                pv_data, f"PV_house_{house}", save_dir, freq, forecast_horizon, sampling_rate, architecture, size, patch_size, batch_size
+                pv_data, f"PV_house_{house}", save_dir, freq, forecast_horizon, sampling_rate, architecture, size, patch_size, batch_size, device
             )
             metrics.append({"model": f"pv_house_{house}", "MAE": pv_mae, "RMSE": pv_rmse})
         logging.info("Forecasting BESS")
         for house in [1, 2, 3, 4]:
             battery_data = dataset.get_inputs_for_battery(house, start_dt, end_dt)
             battery_mae, battery_rmse = moirai_forecast_model(battery_data, f"BESS_house_{house}", save_dir, freq, forecast_horizon,
-                                                              sampling_rate, architecture, size, patch_size, batch_size)
+                                                              sampling_rate, architecture, size, patch_size, batch_size, device)
             metrics.append({"model": f"bess_house_{house}", "MAE": battery_mae, "RMSE": battery_rmse})
     elif dataset_name == "germany":
         logging.info("Forecasting Germany load")
         load_data = dataset.get_inputs_for_load(start_dt, end_dt)
         load_mae, load_rmse = moirai_forecast_model(
-            load_data, "germany_load", save_dir, freq, forecast_horizon, sampling_rate, architecture, size, patch_size, batch_size
+            load_data, "germany_load", save_dir, freq, forecast_horizon, sampling_rate, architecture, size, patch_size, batch_size, device
         )
         metrics.append({"model": "germany_load", "MAE": load_mae, "RMSE": load_rmse})
     elif dataset_name == "london":
         logging.info("Forecasting London load")
         load_data = dataset.get_inputs_for_load()
         load_mae, load_rmse = moirai_forecast_model(
-            load_data, "london_load", save_dir, freq, forecast_horizon, sampling_rate, architecture, size, patch_size, batch_size
+            load_data, "london_load", save_dir, freq, forecast_horizon, sampling_rate, architecture, size, patch_size, batch_size, device
         )
         metrics.append({"model": "london_load", "MAE": load_mae, "RMSE": load_rmse})
     elif dataset_name == "zonnedael":
@@ -136,7 +143,7 @@ def train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, freq, fo
         for customer_id in [8, 9, 43]:
             data_df = dataset.get_inputs_for_zonnedael_consumption(customer_id)
             cust_mae, cust_rmse = moirai_forecast_model(data_df, f"zonnedael_customer_{customer_id}", save_dir, freq, forecast_horizon,
-                                                        sampling_rate, architecture, size, patch_size, batch_size)
+                                                        sampling_rate, architecture, size, patch_size, batch_size, device)
             metrics.append({"model": f"zonnedael_customer_{customer_id}", "MAE": cust_mae, "RMSE": cust_rmse})
     pd.DataFrame(metrics).to_csv(os.path.join(save_dir, "model_metrics_summary.csv"), index=False, float_format="%.6f")
     plot_model_metrics(metrics, save_dir)
@@ -144,7 +151,10 @@ def train_all_models(dataset_name, dataset, start_dt, end_dt, save_dir, freq, fo
     logging.info("...End Uni2TS/Moirai forecasting...")
     logging.info(f"Forecasting completed in {elapsed_time:.2f} seconds.")
 
-def paper_forecasting_train(dataset_name, dataset, run_num, sampling_rate, architecture, size, patch_size, batch_size, results_dir=PROJECT_ROOT / "results"):
+def paper_forecasting_train(
+    dataset_name, dataset, run_num, sampling_rate, architecture, size, patch_size,
+    batch_size, device, results_dir=PROJECT_ROOT / "results"
+):
     warnings.filterwarnings("ignore", category=pd.errors.PerformanceWarning)
     start_dt = pd.Timestamp("2024-01-01 00:00:00", tz="UTC")
     end_dt = pd.Timestamp("2024-04-01 00:00:00", tz="UTC")
@@ -154,7 +164,7 @@ def paper_forecasting_train(dataset_name, dataset, run_num, sampling_rate, archi
         gc.collect()
         save_dir = results_dir / f"results_{dataset_name}/MOIRAI/Sampling_{sampling_rate:.0f}/Run_{run_num}"
         train_all_models(
-            dataset_name, dataset, start_dt, end_dt, save_dir, freq_str, forecast_horizon, sampling_rate, architecture, size, patch_size, batch_size
+            dataset_name, dataset, start_dt, end_dt, save_dir, freq_str, forecast_horizon, sampling_rate, architecture, size, patch_size, batch_size, device
         )
         gc.collect()
     except Exception as e:
@@ -173,9 +183,11 @@ if __name__ == "__main__":
     parser.add_argument("--size", choices=["small", "base", "large"], default="small", help="Checkpoint size.")
     parser.add_argument("--patch_size", type=lambda value: value if value == "auto" else int(value), default="auto", help="Patch size for Moirai.")
     parser.add_argument("--batch_size", type=int, default=32, help="Prediction batch size.")
+    parser.add_argument("--gpu", type=int, default=-1, help=GPU_HELP)
     parser.add_argument("--results_dir", type=Path, default=PROJECT_ROOT / "results", help="Root directory for generated results.")
     args = parser.parse_args()
     dataset = dataset_classes[args.dataset]()
+    device = torch_device(args.gpu)
     # Run all sampling rates and seeds
     for sampling_rate in args.sampling_rates:
         # Loop for run_num
@@ -189,5 +201,6 @@ if __name__ == "__main__":
                 args.size,
                 args.patch_size,
                 args.batch_size,
+                device,
                 args.results_dir
             )
