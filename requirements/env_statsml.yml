@@ -1,0 +1,14 @@
+name: statsml
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - lightgbm>=4,<5
+  - matplotlib
+  - numpy>=1.21,<2
+  - pandas
+  - pmdarima=2.0.4
+  - scikit-learn
+  - scipy
+  - seaborn
+  - pip

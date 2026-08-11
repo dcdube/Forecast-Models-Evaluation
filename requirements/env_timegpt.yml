@@ -1,0 +1,14 @@
+name: timegpt
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - matplotlib
+  - numpy
+  - pandas
+  - scikit-learn
+  - scipy
+  - seaborn
+  - pip
+  - pip:
+    - nixtla==0.8.0

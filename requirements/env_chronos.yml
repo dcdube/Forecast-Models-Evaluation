@@ -1,0 +1,21 @@
+name: chronos
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.11
+  - matplotlib
+  - numpy>=1.21,<3
+  - pandas>=2,<4
+  - pytorch>=2.2,<=2.6
+  - pytorch-cuda>=11.8,<13
+  - scikit-learn
+  - scipy
+  - seaborn
+  - pip
+  - pip:
+    - accelerate>=1.1,<2
+    - chronos-forecasting==2.3.1
+    - einops>=0.7,<1
+    - transformers>=4.41,<6

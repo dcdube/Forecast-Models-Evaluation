@@ -1,0 +1,20 @@
+name: timesfm
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.11
+  - matplotlib
+  - numpy>=1.26.4,<2
+  - pandas>=2
+  - pytorch>=2,<=2.6
+  - pytorch-cuda>=11.8,<13
+  - scikit-learn>=1.2.2
+  - scipy
+  - seaborn
+  - pip
+  - pip:
+    - huggingface-hub[cli]>=0.23
+    - timesfm[torch]==1.3.0
+    - utilsforecast>=0.1.10

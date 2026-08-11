@@ -1,0 +1,25 @@
+name: mamba
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.11
+  - cuda-nvcc>=11.8,<13
+  - matplotlib
+  - ninja
+  - numpy
+  - packaging
+  - pandas
+  - pytorch>=2.2,<=2.6
+  - pytorch-cuda>=11.8,<13
+  - scikit-learn
+  - scipy
+  - seaborn
+  - setuptools>=61
+  - wheel
+  - pip
+  - pip:
+    - einops
+    - mamba-ssm==2.2.5
+    - transformers

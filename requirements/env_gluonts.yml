@@ -1,0 +1,19 @@
+name: gluonts
+channels:
+  - conda-forge
+dependencies:
+  # MXNet 1.9.1's GPU wheel targets the CUDA 11 runtime.
+  - python=3.7
+  - matplotlib=3.5.3
+  - numpy=1.21.6
+  - packaging=23.2
+  - pandas=1.3.5
+  - scikit-learn=1.0.2
+  - scipy=1.7.3
+  - seaborn=0.12.2
+  - pip
+  - pip:
+    - gluonts==0.14.4
+    - mxnet-cu112==1.9.1
+    - nvidia-nccl-cu11==2.21.5
+    - ujson==5.7.0

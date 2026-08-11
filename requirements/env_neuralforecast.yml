@@ -1,0 +1,25 @@
+name: neuralforecast
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.11
+  - coreforecast>=0.0.6
+  - fsspec
+  - matplotlib
+  - numba
+  - numpy>=1.21.6
+  - optuna
+  - pandas>=1.3.5
+  - pytorch>=2,<=2.6
+  - pytorch-cuda>=11.8,<13
+  - pytorch-lightning>=2
+  - scikit-learn
+  - scipy
+  - seaborn
+  - pip
+  - pip:
+    - neuralforecast==3.0.2
+    - ray[tune]>=2.2
+    - utilsforecast>=0.2.3

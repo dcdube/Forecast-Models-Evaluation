@@ -1,0 +1,21 @@
+name: timerxl
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.11
+  - matplotlib
+  - numpy
+  - pandas
+  - pytorch>=2.2,<=2.6
+  - pytorch-cuda>=11.8,<13
+  - scikit-learn
+  - scipy
+  - seaborn
+  - pip
+  - pip:
+    - accelerate
+    - huggingface-hub
+    - safetensors
+    - transformers==4.40.1
