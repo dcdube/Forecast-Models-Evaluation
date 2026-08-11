@@ -21,24 +21,24 @@ The benchmarking pipeline applies a standardized preprocessing workflow includin
 
 To reproduce the results, there is need to create several python environments for different model libraries to avoid confliciting packages. The links to the repositories of all the models evaluated in this work are presented in the **Forecasting Models** section.
 
-### Run a model script
-
-Each script runs the models it contains and stores results in the .
+Every model script provides CLI help and keeps its previous benchmark settings as defaults:
 
 ```bash
-python models/models_statsml.py
-python models/models_neuralforecast.py
-python models/models_gluonts.py
-python models/model_mamba.py
-python models/model_naivedrift.py
-python models/fmodel_timegpt.py
-python models/fmodel_timesfm.py
-python models/fmodel_moirai.py
-python models/fmodel_chronos.py
-python models/fmodel_timerxl.py
+python models/model_naivedrift.py --help
+python models/model_naivedrift.py --dataset london --sampling_rate 100 --runs 1
+python models/models_neuralforecast.py --dataset germany --models NBEATS NHITS --epochs 100 --runs 1
 ```
 
-To switch datasets, edit the `selected_dataset` in the relevant script.
+The common options are `--dataset`, `--sampling_rate` (one or more percentages), `--runs`, and `--results_dir`. Multi-model scripts also provide `--models`; trainable models provide `--epochs` where applicable. Foundation-model scripts expose their checkpoint, device, batch_size, and service settings through their own CLI options. Data and result defaults are resolved from the repository root, independent of the launch directory.
+
+The executable analysis utilities also provide CLI help:
+
+```bash
+python utils/plots.py --directory results/results_belgium/AutoARIMA/Sampling_100/Run_1
+python utils/dm_test.py --datasets belgium germany --font_size 9
+```
+
+Use `python <script> --help` for all available options.
 
 ## Datasets
 
@@ -65,6 +65,16 @@ Each model lists its primary library and a GitHub repository. Scripts are linked
 | Naive Drift | custom (numpy, pandas) | https://github.com/numpy/numpy | [models/model_naivedrift.py](models/model_naivedrift.py) |
 | Naive Moving Average | custom (numpy, pandas) | https://github.com/pandas-dev/pandas | [models/models_statsml.py](models/models_statsml.py) |
 
+Complete CLI examples:
+
+```bash
+# AutoARIMA, KNN Regression, LightGBM, and Naive Moving Average
+python models/models_statsml.py --dataset london --sampling_rates 25 100/3 50 100 --models KNNRegression LightGBM ARIMA NaiveMovingAverage --runs 1 --results_dir results
+
+# Naive Drift
+python models/model_naivedrift.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 1 --results_dir results
+```
+
 ### 2. MLP-based Models
 
 | Model | Library | Repository | Script |
@@ -74,6 +84,12 @@ Each model lists its primary library and a GitHub repository. Scripts are linked
 | NHITS | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
 | NLinear | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
 | TiDE | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
+
+Complete CLI example:
+
+```bash
+python models/models_neuralforecast.py --dataset belgium --sampling_rates 25 100/3 50 100 --models DeepNPTS NBEATS NHITS NLinear TiDE --runs 10 --epochs 100 --results_dir results
+```
 
 ### 3. Recurrent Networks
 
@@ -85,6 +101,16 @@ Each model lists its primary library and a GitHub repository. Scripts are linked
 | Mamba | mamba-ssm | https://github.com/state-spaces/mamba | [models/model_mamba.py](models/model_mamba.py) |
 | Temporal Fusion Transformer (TFT) | GluonTS | https://github.com/awslabs/gluonts | [models/models_gluonts.py](models/models_gluonts.py) |
 
+Complete CLI examples:
+
+```bash
+# DeepAR, DeepFactor, MQ-RNN, and Temporal Fusion Transformer
+python models/models_gluonts.py --dataset belgium --sampling_rates 25 100/3 50 100 --models DeepAR DeepFactor MQRNN TemporalFusionTransformer --runs 10 --epochs 100 --results_dir results
+
+# Mamba
+python models/model_mamba.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 10 --epochs 100 --results_dir results
+```
+
 ### 4. Convolutional Networks
 
 | Model | Library | Repository | Script |
@@ -94,6 +120,16 @@ Each model lists its primary library and a GitHub repository. Scripts are linked
 | TimesNet | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
 | WaveNet | GluonTS | https://github.com/awslabs/gluonts | [models/models_gluonts.py](models/models_gluonts.py) |
 | MQ-CNN | GluonTS | https://github.com/awslabs/gluonts | [models/models_gluonts.py](models/models_gluonts.py) |
+
+Complete CLI examples:
+
+```bash
+# TCN, BiTCN, and TimesNet
+python models/models_neuralforecast.py --dataset belgium --sampling_rates 25 100/3 50 100 --models TCN BiTCN TimesNet --runs 10 --epochs 100 --results_dir results
+
+# WaveNet and MQ-CNN
+python models/models_gluonts.py --dataset belgium --sampling_rates 25 100/3 50 100 --models WaveNet MQCNN --runs 10 --epochs 100 --results_dir results
+```
 
 ### 5. Transformer-based Models
 
@@ -105,6 +141,12 @@ Each model lists its primary library and a GitHub repository. Scripts are linked
 | Vanilla Transformer | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
 | TimeXer | NeuralForecast | https://github.com/Nixtla/neuralforecast | [models/models_neuralforecast.py](models/models_neuralforecast.py) |
 
+Complete CLI example:
+
+```bash
+python models/models_neuralforecast.py --dataset belgium --sampling_rates 25 100/3 50 100 --models Informer PatchTST iTransformer VanillaTransformer TimeXer --runs 10 --epochs 100 --results_dir results
+```
+
 ### 6. Time Series Foundation Models
 
 | Model | Library | Repository | Script |
@@ -115,13 +157,32 @@ Each model lists its primary library and a GitHub repository. Scripts are linked
 | Chronos | chronos-forecasting | https://github.com/amazon-science/chronos-forecasting | [models/fmodel_chronos.py](models/fmodel_chronos.py) |
 | Timer-XL | transformers | https://github.com/huggingface/transformers | [models/fmodel_timerxl.py](models/fmodel_timerxl.py) |
 
+Complete CLI examples:
+
+```bash
+# TimeGPT
+python models/fmodel_timegpt.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 1 --api_key nixak-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX --model timegpt-1-long-horizon --confidence_level 95 --finetune_steps 0 --finetune_depth 1 --results_dir results
+
+# TimesFM
+python models/fmodel_timesfm.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 1 --backend gpu --batch_size 32 --model_id google/timesfm-1.0-200m-pytorch --results_dir results
+
+# MOIRAI
+python models/fmodel_moirai.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 1 --model moirai --size small --patch_size auto --batch_size 32 --results_dir results
+
+# Chronos
+python models/fmodel_chronos.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 1 --model_id amazon/chronos-bolt-small --device auto --results_dir results
+
+# Timer-XL
+python models/fmodel_timerxl.py --dataset belgium --sampling_rates 25 100/3 50 100 --runs 1 --model_id thuml/timer-base-84m --save_folder TimerXL --device auto --results_dir results
+```
+
 ## Notes
 
 - Some models can run on the CPU while others require GPU for practical runtimes.
-- TimeGPT requires a valid API key in [models/fmodel_timegpt.py](models/fmodel_timegpt.py).
-- Timer-XL uses Hugging Face model IDs. Edit the `model_configs` mapping in [models/fmodel_timerxl.py](models/fmodel_timerxl.py) to switch models.
+- TimeGPT requires a valid API key supplied with `--api_key`.
+- Timer-XL uses Hugging Face model IDs. Use `--model_id` and `--save_folder` to switch models.
 - Chronos, TimesFM, and MOIRAI may download weights on first run.
 
 ## Results
 
-All model outputs are saved in the `results` folder with per-run plots and metrics summaries. The plotting and metrics utilities are in [utils/metrics.py](utils/metrics.py) and [utils/plots.py](utils/plots.py). Please refer to our paper for the results.
+All model outputs are saved in the `results` folder with per-run plots and metrics summaries. Generated CSV floating-point values use at most six decimal places. The plotting and metrics utilities are in [utils/metrics.py](utils/metrics.py) and [utils/plots.py](utils/plots.py). Please refer to our paper for the results.

@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import pickle
-import numpy as np
 import pandas as pd
 import seaborn as sns
 import logging
@@ -12,10 +11,8 @@ from sklearn.preprocessing import MinMaxScaler
 def calculate_metrics(preds, actuals):
     preds = np.asarray(preds)
     actuals = np.asarray(actuals)
-    
     mae = np.mean(np.abs(preds - actuals))
     rmse = np.sqrt(np.mean((preds - actuals) ** 2))
-    
     return mae, rmse
 
 # Save trained model to pickle
@@ -34,15 +31,11 @@ def setup_logger(save_dir):
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=[
-            logging.FileHandler(log_file, mode='w'),
-            logging.StreamHandler()
-        ]
+        handlers=[logging.FileHandler(log_file, mode='w'), logging.StreamHandler()]
     )
 
 def min_max_normalize(X):
     scaler = MinMaxScaler()
-    
     # If input is a Series or 1D array, reshape to 2D
     if isinstance(X, pd.Series):
         X_values = X.values.reshape(-1, 1)
@@ -58,7 +51,7 @@ def min_max_normalize(X):
 def forecast_plot_and_csv(df, model_name, save_dir):
     csv_path = os.path.join(save_dir, f"{model_name}_forecast_vs_actual.csv")
     pdf_path = os.path.join(save_dir, f"{model_name}_forecast_vs_actual.pdf")
-    df.to_csv(csv_path)
+    df.to_csv(csv_path, float_format="%.6f")
     df.plot(figsize=(12, 5), title=f"Forecast vs Actual - {model_name}")
     plt.ylabel("Normalized Value")
     plt.xlabel("Datetime")
@@ -68,7 +61,6 @@ def forecast_plot_and_csv(df, model_name, save_dir):
 
 def plot_model_metrics(metrics, save_dir: str):
     os.makedirs(save_dir, exist_ok=True)
-
     # If metrics is a string, treat it as a CSV path
     if isinstance(metrics, str):
         metrics_df = pd.read_csv(metrics)
@@ -76,14 +68,12 @@ def plot_model_metrics(metrics, save_dir: str):
         # Assume it's a list of dicts and save to CSV
         metrics_df = pd.DataFrame(metrics)
         csv_path = os.path.join(save_dir, "model_metrics_summary.csv")
-        metrics_df.to_csv(csv_path, index=False)
+        metrics_df.to_csv(csv_path, index=False, float_format="%.6f")
         logging.info(f"Saved model metrics to {csv_path}")
-
     # Plotting
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
     fig.suptitle("Model Metrics Summary", fontsize=16)
     metrics_to_plot = ["MAE", "RMSE"]
-
     for ax, metric in zip(axes.flatten(), metrics_to_plot):
         sns.barplot(
             data=metrics_df,
@@ -100,8 +90,6 @@ def plot_model_metrics(metrics, save_dir: str):
         ax.grid(True)
         if ax.get_legend():
             ax.get_legend().remove()
-
     plt.tight_layout()
     pdf_path = os.path.join(save_dir, "model_metrics_summary.pdf")
     plt.savefig(pdf_path)
- 
