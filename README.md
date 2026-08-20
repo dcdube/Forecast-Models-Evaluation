@@ -1,6 +1,6 @@
 # A Survey and Benchmark for Household Electricity Forecasting: From Statistical to Foundation Models
 
-This is the official repository for our work on benchmarking forecasting models on **household energy consumption and generation** tasks. We evaluate **30 representative time-series forecasting models** spanning the full spectrum of forecasting approaches, from classical statistical and machine learning models to modern deep learning architectures and **time series foundation models (TSFMs)**. All models are evaluated within a **unified benchmarking framework** to ensure fair comparison. The study focuses on three key residential energy forecasting tasks:
+This is the official repository for our [work](https://doi.org/10.1016/j.egyr.2026.109594) on benchmarking forecasting models on **household energy consumption and generation** tasks. We evaluate **30 representative time-series forecasting models** spanning the full spectrum of forecasting approaches, from classical statistical and machine learning models to modern deep learning architectures and **time series foundation models (TSFMs)**. All models are evaluated within a **unified benchmarking framework** to ensure fair comparison. The study focuses on three key residential energy forecasting tasks:
 
 - **Electricity load forecasting**
 - **Solar photovoltaic (PV) generation forecasting**
@@ -209,6 +209,19 @@ python models/fmodel_timerxl.py --gpu 0 --dataset belgium --sampling_rates 100 -
 - TimeGPT requires a valid API key supplied with `--api_key`.
 - Chronos, TimesFM, MOIRAI, and Timer-XL download weights on first run.
 
-## Results
+## Citation
 
-All model outputs are saved in the `results_dir` folder with per-run plots and metrics summaries. The plotting and metrics utilities are in [utils/metrics.py](utils/metrics.py) and [utils/plots.py](utils/plots.py). Please refer to our paper for the results and references to all the models evaluated.
+Please refer to our paper for the results and references to all the models evaluated.
+
+```bibtex
+@article{DUBE2026109594,
+    title = {A survey and benchmark for household electricity forecasting: From statistical to foundation models},
+    journal = {Energy Reports},
+    volume = {16},
+    pages = {109594},
+    year = {2026},
+    issn = {2352-4847},
+    doi = {https://doi.org/10.1016/j.egyr.2026.109594},
+    author = {Devilliers Dube and Yu Xiang and Werner {van Westering} and Fedja Zdrnja and Koen Kok and Nirvana Meratnia}
+}
+```
