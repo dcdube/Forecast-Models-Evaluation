@@ -42,10 +42,10 @@ The common options are `--dataset`, `--sampling_rate`, `--runs`, `--gpu`, and `-
 
 Datasets are loaded via [utils/dataset_config.py](utils/dataset_config.py). File locations used by the loaders:
 
-- Belgium PV and battery datasets: [data/belgium_dataset](data/belgium_dataset)
-- Germany WPUQ (SFH19): [data/germany_wpuq_dataset/SFH19_2023_2024_15min_3_month.csv](data/germany_wpuq_dataset/SFH19_2023_2024_15min_3_month.csv)
-- London smart meter dataset: [data/london_dataset/LCL_london_consumption_2013.csv](data/london_dataset/LCL_london_consumption_2013.csv)
-- Zonnedael dataset: [data/zonnedael_dataset/liander_zonnedael_2013_original.csv](data/zonnedael_dataset/liander_zonnedael_2013_original.csv)
+- Belgium PV and battery datasets: [local files](data/belgium_dataset); [original data](https://github.com/EVERGi/real_validation_saferl_treec_paper/tree/main/data/houses)
+- Germany WPUQ (SFH19): [local file](data/germany_wpuq_dataset/SFH19_2023_2024_15min_3_month.csv); [original data](https://springernature.figshare.com/articles/dataset/Metadata_record_for_Dataset_on_electrical_single-family_house_and_heat_pump_load_profiles_in_Germany/17206271)
+- London smart meter dataset: [local file](data/london_dataset/LCL_london_consumption_2013.csv); [original data](https://data.london.gov.uk/dataset/smartmeter-energy-use-data-in-london-households)
+- Zonnedael dataset: [local file](data/zonnedael_dataset/liander_zonnedael_2013_original.csv); [original data](https://www.liander.nl/over-ons/open-data#verbruiksdata-slimme-meter)
 
 ## Forecasting Models
 
